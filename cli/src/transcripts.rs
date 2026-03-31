@@ -15,6 +15,7 @@ pub struct SessionFile {
 
 #[derive(Debug, Clone)]
 pub struct ToolCall {
+    pub id: String,
     pub timestamp: String,
     pub name: String,
     pub input: Value,
@@ -23,6 +24,7 @@ pub struct ToolCall {
 
 #[derive(Debug, Clone)]
 pub struct ToolResult {
+    pub tool_use_id: String,
     pub tool_name: String,
     pub text: String,
 }
@@ -35,6 +37,11 @@ pub struct UserPrompt {
 }
 
 #[derive(Debug, Clone)]
+pub struct AssistantText {
+    pub text: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct ParsedSession {
     pub project: String,
     pub is_subagent: bool,
@@ -44,6 +51,7 @@ pub struct ParsedSession {
     pub prompts: Vec<UserPrompt>,
     pub tool_calls: Vec<ToolCall>,
     pub tool_results: Vec<ToolResult>,
+    pub assistant_texts: Vec<AssistantText>,
     pub interrupts: u32,
     pub api_errors: u32,
     pub compactions: u32,
@@ -62,17 +70,42 @@ fn collect_jsonl_recursive(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-fn decode_project_name(dir_name: &str) -> String {
-    let original_path = dir_name.replacen('-', "/", 1).replace('-', "/");
-    let parts: Vec<&str> = original_path
+fn project_name_from_cwd(cwd: &str) -> String {
+    let parts: Vec<&str> = cwd
         .split('/')
-        .filter(|s| !s.is_empty() && *s != "Users" && *s != "martinvanco" && *s != "Documents")
+        .filter(|s| !s.is_empty())
         .collect();
-    if parts.is_empty() {
-        dir_name.to_string()
+    let skip = &["Users", "Documents"];
+    let home_user = std::env::var("USER").unwrap_or_default();
+    let meaningful: Vec<&str> = parts
+        .iter()
+        .filter(|s| !skip.contains(s) && **s != home_user)
+        .copied()
+        .collect();
+    if meaningful.is_empty() {
+        cwd.to_string()
     } else {
-        parts[parts.len().saturating_sub(3)..].join("/")
+        meaningful[meaningful.len().saturating_sub(2)..].join("/")
     }
+}
+
+fn dir_name_fallback(dir_name: &str) -> String {
+    dir_name.to_string()
+}
+
+fn read_cwd_from_jsonl(path: &Path) -> Option<String> {
+    let reader = BufReader::new(fs::File::open(path).ok()?);
+    for line in reader.lines() {
+        let line = line.ok()?;
+        if line.trim().is_empty() { continue; }
+        let evt: Value = serde_json::from_str(&line).ok()?;
+        if let Some(cwd) = evt.get("cwd").and_then(|v| v.as_str()) {
+            if !cwd.is_empty() {
+                return Some(cwd.to_string());
+            }
+        }
+    }
+    None
 }
 
 pub fn discover_sessions(projects_dir: &str, include_subagents: bool) -> Result<Vec<SessionFile>> {
@@ -86,9 +119,19 @@ pub fn discover_sessions(projects_dir: &str, include_subagents: bool) -> Result<
             continue;
         }
         let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("unknown");
-        let project = decode_project_name(dir_name);
         let mut files = Vec::new();
         collect_jsonl_recursive(&path, &mut files)?;
+
+        // Read cwd from the first main session file to derive the project name
+        let cwd = files
+            .iter()
+            .find(|f| !f.to_string_lossy().contains("/subagents/agent-"))
+            .and_then(|f| read_cwd_from_jsonl(f));
+        let project = match &cwd {
+            Some(c) => project_name_from_cwd(c),
+            None => dir_name_fallback(dir_name),
+        };
+
         for file in files {
             let file_str = file.to_string_lossy();
             let is_subagent = file_str.contains("/subagents/agent-");
@@ -111,7 +154,8 @@ fn is_real_user_prompt(text: &str) -> bool {
         && !trimmed.starts_with("<local-command")
         && !trimmed.starts_with("<bash-")
         && !trimmed.starts_with("/plugin")
-        && !trimmed.starts_with("<command-name>/")
+        && !trimmed.starts_with("<command-name>")
+        && !trimmed.starts_with("<command-message>")
         && !trimmed.starts_with("<task-notification")
         && !trimmed.starts_with("<system-reminder>")
         && trimmed != "Warmup"
@@ -121,6 +165,7 @@ fn is_real_user_prompt(text: &str) -> bool {
         && !lower.starts_with("your task is to create a detailed summary of the conversation so far")
         && !lower.starts_with("your task is to compact the conversation")
         && !lower.starts_with("you are resuming a previously interrupted conversation summary")
+        && !lower.starts_with("unknown skill:")
 }
 
 fn text_from_content(content: &Value) -> String {
@@ -149,6 +194,7 @@ fn parse_session(file: &SessionFile) -> Result<Option<ParsedSession>> {
     let mut prompts = Vec::new();
     let mut tool_calls = Vec::new();
     let mut tool_results = Vec::new();
+    let mut assistant_texts = Vec::new();
     let mut event_count = 0u32;
     let mut seen_user_messages = HashSet::new();
     let mut seen_tool_ids = HashSet::new();
@@ -197,21 +243,30 @@ fn parse_session(file: &SessionFile) -> Result<Option<ParsedSession>> {
                 }
                 if let Some(content) = evt.pointer("/message/content").and_then(|v| v.as_array()) {
                     for block in content {
-                        if block.get("type").and_then(|v| v.as_str()) != Some("tool_use") {
-                            continue;
+                        match block.get("type").and_then(|v| v.as_str()) {
+                            Some("tool_use") => {
+                                let tool_id = block.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                if !tool_id.is_empty() && !seen_tool_ids.insert(tool_id.clone()) {
+                                    continue;
+                                }
+                                let tool_name = block.get("name").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
+                                tool_name_by_id.insert(tool_id.clone(), tool_name.clone());
+                                tool_calls.push(ToolCall {
+                                    id: tool_id,
+                                    timestamp: ts.clone(),
+                                    name: tool_name,
+                                    input: block.get("input").cloned().unwrap_or(Value::Null),
+                                    permission_mode: current_permission_mode.clone(),
+                                });
+                            }
+                            Some("text") => {
+                                let text = block.get("text").and_then(|v| v.as_str()).unwrap_or("");
+                                if !text.is_empty() {
+                                    assistant_texts.push(AssistantText { text: text.to_string() });
+                                }
+                            }
+                            _ => {}
                         }
-                        let tool_id = block.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                        if !tool_id.is_empty() && !seen_tool_ids.insert(tool_id.clone()) {
-                            continue;
-                        }
-                        let tool_name = block.get("name").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
-                        tool_name_by_id.insert(tool_id.clone(), tool_name.clone());
-                        tool_calls.push(ToolCall {
-                            timestamp: ts.clone(),
-                            name: tool_name,
-                            input: block.get("input").cloned().unwrap_or(Value::Null),
-                            permission_mode: current_permission_mode.clone(),
-                        });
                     }
                 }
             }
@@ -239,16 +294,39 @@ fn parse_session(file: &SessionFile) -> Result<Option<ParsedSession>> {
                         }
                     }
                     Some(Value::Array(items)) => {
+                        let mut has_tool_result = false;
                         for block in items {
-                            if block.get("type").and_then(|v| v.as_str()) != Some("tool_result") {
-                                continue;
+                            if block.get("type").and_then(|v| v.as_str()) == Some("tool_result") {
+                                has_tool_result = true;
+                                let tool_use_id = block.get("tool_use_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let text = text_from_content(block.get("content").unwrap_or(&Value::Null));
+                                tool_results.push(ToolResult {
+                                    tool_use_id: tool_use_id.clone(),
+                                    tool_name: tool_name_by_id.get(&tool_use_id).cloned().unwrap_or_else(|| "unknown".to_string()),
+                                    text,
+                                });
                             }
-                            let tool_use_id = block.get("tool_use_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                            let text = text_from_content(block.get("content").unwrap_or(&Value::Null));
-                            tool_results.push(ToolResult {
-                                tool_name: tool_name_by_id.get(&tool_use_id).cloned().unwrap_or_else(|| "unknown".to_string()),
-                                text,
-                            });
+                        }
+                        // Handle text blocks in array-format user messages (interrupts + real prompts)
+                        if !has_tool_result {
+                            let combined: String = items
+                                .iter()
+                                .filter(|b| b.get("type").and_then(|v| v.as_str()) == Some("text"))
+                                .filter_map(|b| b.get("text").and_then(|v| v.as_str()))
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            if !combined.is_empty() {
+                                if interrupt_re.is_match(&combined) {
+                                    interrupts += 1;
+                                }
+                                if is_real_user_prompt(&combined) {
+                                    prompts.push(UserPrompt {
+                                        timestamp: ts.clone(),
+                                        text: combined,
+                                        permission_mode: current_permission_mode.clone(),
+                                    });
+                                }
+                            }
                         }
                     }
                     _ => {}
@@ -271,6 +349,7 @@ fn parse_session(file: &SessionFile) -> Result<Option<ParsedSession>> {
         prompts,
         tool_calls,
         tool_results,
+        assistant_texts,
         interrupts,
         api_errors,
         compactions,

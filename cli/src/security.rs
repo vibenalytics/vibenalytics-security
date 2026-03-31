@@ -1,4 +1,4 @@
-use crate::transcripts::{ParsedSession, ToolCall};
+use crate::transcripts::{ParsedSession, ToolCall, ToolResult};
 use regex::Regex;
 use serde::Serialize;
 use std::cmp::Ordering;
@@ -211,11 +211,13 @@ pub struct LabeledCount {
 struct Rules {
     secret_assignment_line: Regex,
     key_assignment_line: Regex,
+    token_assignment_line: Regex,
     assignment_name: Regex,
     postgres_urls: Regex,
     anthropic_tokens: Regex,
     bearer_tokens: Regex,
     mysql_urls: Regex,
+    private_key_block: Regex,
     sensitive_path: Regex,
     env_path: Regex,
     ssh_direct: Regex,
@@ -239,11 +241,13 @@ impl Rules {
         Self {
             secret_assignment_line: Regex::new(r#"\b[A-Z0-9_]*SECRET[A-Z0-9_]*\s*=\s*[^\s"'`;]+"#).unwrap(),
             key_assignment_line: Regex::new(r#"\b[A-Z0-9_]*KEY[A-Z0-9_]*\s*=\s*[^\s"'`;]+"#).unwrap(),
+            token_assignment_line: Regex::new(r#"\b[A-Z0-9_]*TOKEN[A-Z0-9_]*\s*=\s*[^\s"'`;]+"#).unwrap(),
             assignment_name: Regex::new(r#"([A-Z0-9_]+)\s*="#).unwrap(),
             postgres_urls: Regex::new(r#"\bpostgres(?:ql)?://[^\s"'`]+"#).unwrap(),
             anthropic_tokens: Regex::new(r"\bsk-ant-[A-Za-z0-9\-_]+\b").unwrap(),
             bearer_tokens: Regex::new(r"\bBearer\s+[A-Za-z0-9._\-]+\b").unwrap(),
             mysql_urls: Regex::new(r#"\bmysql://[^\s"'`]+"#).unwrap(),
+            private_key_block: Regex::new(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----").unwrap(),
             sensitive_path: Regex::new(r"(^|/)(\.env(?:\.[^/\s]+)?|docker-compose[^/\s]*\.ya?ml|secrets?[^/\s]*|credentials?[^/\s]*|id_rsa|id_ed25519)$").unwrap(),
             env_path: Regex::new(r"(^|/)\.env(?:\.[^/\s]+)?$").unwrap(),
             ssh_direct: Regex::new(r#"^\s*ssh(?:\s+-[A-Za-z0-9]+(?:\s+\S+)*)*\s+\S+\s+["']?.+["']?\s*$"#).unwrap(),
@@ -409,35 +413,36 @@ fn classify_risk(rules: &Rules, command: &str) -> Option<(String, String, String
     None
 }
 
+fn count_assignment_pattern(
+    regex: &Regex,
+    name_regex: &Regex,
+    text: &str,
+    label: &str,
+    default_name: &str,
+    project: &str,
+    tally: &mut SecretTally,
+) {
+    let mut seen = HashSet::new();
+    for mat in regex.find_iter(text) {
+        let matched = mat.as_str().to_string();
+        if !seen.insert(matched.clone()) {
+            continue;
+        }
+        inc(&mut tally.by_type, label, 1);
+        if let Some(cap) = name_regex.captures(&matched) {
+            let name = cap.get(1).map(|m| m.as_str()).unwrap_or(default_name);
+            inc(&mut tally.by_name, name, 1);
+            tally.name_projects.entry(name.to_string()).or_default().insert(project.to_string());
+        }
+        *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
+    }
+}
+
 fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut SecretTally) {
-    let mut seen_secret_assignments = HashSet::new();
-    for mat in rules.secret_assignment_line.find_iter(text) {
-        let matched = mat.as_str().to_string();
-        if !seen_secret_assignments.insert(matched.clone()) {
-            continue;
-        }
-        inc(&mut tally.by_type, "SECRET= values", 1);
-        if let Some(cap) = rules.assignment_name.captures(&matched) {
-            let name = cap.get(1).map(|m| m.as_str()).unwrap_or("SECRET");
-            inc(&mut tally.by_name, name, 1);
-            tally.name_projects.entry(name.to_string()).or_default().insert(project.to_string());
-        }
-        *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
-    }
-    let mut seen_key_assignments = HashSet::new();
-    for mat in rules.key_assignment_line.find_iter(text) {
-        let matched = mat.as_str().to_string();
-        if !seen_key_assignments.insert(matched.clone()) {
-            continue;
-        }
-        inc(&mut tally.by_type, "KEY= values", 1);
-        if let Some(cap) = rules.assignment_name.captures(&matched) {
-            let name = cap.get(1).map(|m| m.as_str()).unwrap_or("KEY");
-            inc(&mut tally.by_name, name, 1);
-            tally.name_projects.entry(name.to_string()).or_default().insert(project.to_string());
-        }
-        *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
-    }
+    count_assignment_pattern(&rules.secret_assignment_line, &rules.assignment_name, text, "SECRET= values", "SECRET", project, tally);
+    count_assignment_pattern(&rules.key_assignment_line, &rules.assignment_name, text, "KEY= values", "KEY", project, tally);
+    count_assignment_pattern(&rules.token_assignment_line, &rules.assignment_name, text, "TOKEN= values", "TOKEN", project, tally);
+
     let pg = rules.postgres_urls.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
     if pg > 0 {
         inc(&mut tally.by_type, "Postgres URLs", pg);
@@ -460,6 +465,11 @@ fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut Secre
         inc(&mut tally.by_type, "MySQL URLs", mysql);
         *tally.by_project.entry(project.to_string()).or_insert(0) += mysql;
     }
+    let pkey = rules.private_key_block.find_iter(text).count() as u32;
+    if pkey > 0 {
+        inc(&mut tally.by_type, "Private key blocks", pkey);
+        *tally.by_project.entry(project.to_string()).or_insert(0) += pkey;
+    }
 }
 
 fn score_from_goodness(goodness: f64) -> u32 {
@@ -480,21 +490,37 @@ fn weighted_command_risk(critical: u32, high: u32, medium: u32, low: u32) -> f64
 fn weighted_secret_risk(
     secret_values: u32,
     key_values: u32,
+    token_values: u32,
     postgres_urls: u32,
     anthropic_tokens: u32,
     bearer_tokens: u32,
     mysql_urls: u32,
+    private_key_blocks: u32,
     sensitive_reads: u32,
     env_writes: u32,
 ) -> f64 {
     secret_values as f64 * 1.5
         + key_values as f64 * 1.0
+        + token_values as f64 * 1.2
         + postgres_urls as f64 * 2.5
         + anthropic_tokens as f64 * 4.0
         + bearer_tokens as f64 * 3.5
         + mysql_urls as f64 * 2.5
+        + private_key_blocks as f64 * 5.0
         + sensitive_reads as f64 * 0.8
         + env_writes as f64 * 1.2
+}
+
+fn is_destructive_catch(rules: &Rules, result: &ToolResult, tool_calls: &HashMap<&str, &ToolCall>) -> bool {
+    if result.tool_name != "Bash" {
+        return false;
+    }
+    if let Some(tc) = tool_calls.get(result.tool_use_id.as_str()) {
+        let command = extract_command(tc);
+        classify_risk(rules, &command).is_some()
+    } else {
+        false
+    }
 }
 
 pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report {
@@ -647,6 +673,13 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
             }
         }
 
+        // Build tool_call lookup by id for destructive catch detection
+        let tool_call_by_id: HashMap<&str, &ToolCall> = session
+            .tool_calls
+            .iter()
+            .map(|tc| (tc.id.as_str(), tc))
+            .collect();
+
         for result in &session.tool_results {
             count_secret_text(&rules, &result.text, &session.project, &mut secrets);
             let lower = result.text.to_ascii_lowercase();
@@ -657,7 +690,16 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
                 if result.tool_name == "Agent" || result.tool_name == "Task" {
                     agent_rejections += 1;
                 }
+                // Detect destructive catches: denied Bash that contained a risky command
+                if is_destructive_catch(&rules, result, &tool_call_by_id) {
+                    risk.destructive_catches += 1;
+                }
             }
+        }
+
+        // Scan assistant text blocks for secret exposure
+        for at in &session.assistant_texts {
+            count_secret_text(&rules, &at.text, &session.project, &mut secrets);
         }
     }
 
@@ -681,19 +723,23 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
     let low_count = *risk.severity.get("low").unwrap_or(&0);
     let secret_values = *secrets.by_type.get("SECRET= values").unwrap_or(&0);
     let key_values = *secrets.by_type.get("KEY= values").unwrap_or(&0);
+    let token_values = *secrets.by_type.get("TOKEN= values").unwrap_or(&0);
     let postgres_urls = *secrets.by_type.get("Postgres URLs").unwrap_or(&0);
     let anthropic_tokens = *secrets.by_type.get("Anthropic OAuth").unwrap_or(&0);
     let bearer_tokens = *secrets.by_type.get("Bearer tokens").unwrap_or(&0);
     let mysql_urls = *secrets.by_type.get("MySQL URLs").unwrap_or(&0);
+    let private_key_blocks = *secrets.by_type.get("Private key blocks").unwrap_or(&0);
 
     let weighted_secret_rate_per_1000_prompts = if prompt_total > 0 {
         weighted_secret_risk(
             secret_values,
             key_values,
+            token_values,
             postgres_urls,
             anthropic_tokens,
             bearer_tokens,
             mysql_urls,
+            private_key_blocks,
             sensitive_reads,
             env_writes,
         ) / prompt_total as f64 * 1000.0
