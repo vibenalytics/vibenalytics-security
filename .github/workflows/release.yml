@@ -60,7 +60,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           PKG_DIR="npm/${{ matrix.npm_pkg }}"
-          cp target/${{ matrix.target }}/release/vibenalytics-security "$PKG_DIR/vibenalytics-security"
+          cp cli/target/${{ matrix.target }}/release/vibenalytics-security "$PKG_DIR/vibenalytics-security"
           chmod +x "$PKG_DIR/vibenalytics-security"
           # Set version in package.json
           cd "$PKG_DIR"
