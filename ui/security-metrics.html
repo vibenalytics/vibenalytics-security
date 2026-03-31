@@ -145,22 +145,45 @@ function hbar(id, data, left=120) {
   });
 }
 
-function treemap(id, items) {
-  const w = 460, h = 180;
+function severityStack(id, items) {
+  const total = items.reduce((s, d) => s + d.v, 0);
+  if (!total) { d3.select(id).html('<div style="font-size:12px;color:var(--text-muted);padding:24px 0">No flagged commands.</div>'); return; }
+  const w = 460, rowH = 48, gap = 8, h = items.length * (rowH + gap) + 8;
   const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
-  const root = d3.hierarchy({children:items}).sum(d => d.v);
-  d3.treemap().size([w,h]).padding(4).round(true)(root);
-  root.leaves().forEach(d => {
-    svg.append('rect')
-      .attr('x', d.x0).attr('y', d.y0).attr('width', d.x1 - d.x0).attr('height', d.y1 - d.y0)
-      .attr('rx', 6).attr('fill', d.data.c).attr('opacity', 0.18)
-      .on('mouseover', ev => showTip(ev, `<div>${d.data.n}</div><div><strong>${d.data.v}</strong></div>`))
-      .on('mouseout', hideTip);
-    if (d.x1 - d.x0 > 45) {
-      const cx = (d.x0 + d.x1) / 2, cy = (d.y0 + d.y1) / 2;
-      svg.append('text').attr('x', cx).attr('y', cy - 7).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', d.data.c).text(d.data.n);
-      svg.append('text').attr('x', cx).attr('y', cy + 12).attr('text-anchor', 'middle').attr('font-size', 18).attr('font-weight', 600).attr('fill', d.data.c).text(d.data.v);
-    }
+  const maxVal = d3.max(items, d => d.v) || 1;
+  const barW = w - 140;
+
+  items.forEach((d, i) => {
+    const y = i * (rowH + gap) + 4;
+    const bw = (d.v / maxVal) * barW;
+    const pct = ((d.v / total) * 100).toFixed(0);
+
+    // Label
+    svg.append('text').attr('x', 0).attr('y', y + rowH / 2).attr('dy', '.35em')
+      .attr('font-size', 12).attr('font-weight', 600).attr('fill', d.c).text(d.n);
+
+    // Bar background
+    svg.append('rect').attr('x', 80).attr('y', y + 6).attr('width', barW).attr('height', rowH - 12)
+      .attr('rx', 5).attr('fill', C.elevated);
+
+    // Bar fill
+    svg.append('rect').attr('x', 80).attr('y', y + 6).attr('width', 0).attr('height', rowH - 12)
+      .attr('rx', 5).attr('fill', d.c).attr('opacity', 0.35)
+      .on('mouseover', ev => showTip(ev, `<div>${d.n}</div><div><strong>${d.v}</strong> commands (${pct}%)</div>`))
+      .on('mouseout', hideTip)
+      .transition().duration(700).delay(i * 80).attr('width', Math.max(bw, 2));
+
+    // Count + percentage
+    svg.append('text').attr('x', 80 + bw + 8).attr('y', y + rowH / 2).attr('dy', '.35em')
+      .attr('font-size', 13).attr('font-weight', 600).attr('fill', d.c)
+      .attr('font-family', "'JetBrains Mono', monospace")
+      .attr('opacity', 0).transition().duration(400).delay(i * 80 + 500).attr('opacity', 1)
+      .selection().text(`${d.v}`);
+
+    svg.append('text').attr('x', 80 + bw + 8 + String(d.v).length * 9 + 6).attr('y', y + rowH / 2).attr('dy', '.35em')
+      .attr('font-size', 10).attr('fill', C.muted)
+      .attr('font-family', "'JetBrains Mono', monospace")
+      .text(`${pct}%`);
   });
 }
 
@@ -179,7 +202,7 @@ function donut(id, data, total, centerText) {
   g.append('text').attr('text-anchor', 'middle').attr('y', 16).attr('font-size', 10).attr('fill', C.sec).text('bypass share');
 }
 
-function hourBars(id, data) {
+function hourBars(id, data, totalPrompts) {
   const items = data.slice().sort((a, b) => a.hour - b.hour);
   const m = {top:10,right:12,bottom:28,left:30}, w = 520, h = 220;
   const innerW = w - m.left - m.right, innerH = h - m.top - m.bottom;
@@ -210,13 +233,31 @@ function hourBars(id, data) {
     .attr('rx', 3)
     .attr('fill', C.red)
     .attr('opacity', 0.85)
-    .on('mouseover', (ev, d) => showTip(ev, `<div>${String(d.hour).padStart(2,'0')}:00</div><div><strong>${d.bypass_prompts}</strong> bypass prompts</div>`))
+    .on('mouseover', (ev, d) => {
+      const pct = totalPrompts ? ((d.bypass_prompts / totalPrompts) * 100).toFixed(1) : '0';
+      showTip(ev, `<div>${String(d.hour).padStart(2,'0')}:00</div><div><strong>${d.bypass_prompts}</strong> bypass prompts (${pct}%)</div>`);
+    })
     .on('mouseout', hideTip)
     .transition()
     .duration(700)
     .delay((_, i) => i * 20)
     .attr('y', d => y(d.bypass_prompts))
     .attr('height', d => innerH - y(d.bypass_prompts));
+
+  // Percentage labels on top of bars
+  g.selectAll('text.pct')
+    .data(items)
+    .join('text')
+    .attr('class', 'pct')
+    .attr('x', d => x(d.hour) + x.bandwidth() / 2)
+    .attr('y', d => y(d.bypass_prompts) - 4)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 8)
+    .attr('font-family', "'JetBrains Mono', monospace")
+    .attr('fill', C.sec)
+    .attr('opacity', 0)
+    .text(d => totalPrompts ? ((d.bypass_prompts / totalPrompts) * 100).toFixed(1) + '%' : '')
+    .transition().duration(400).delay((_, i) => i * 20 + 600).attr('opacity', 1);
 }
 
 function statCard(num, label, detail, color='var(--text)') {
@@ -364,14 +405,14 @@ function render(data) {
   hbar('#chart-ssh-hosts', arr(data.ssh_remote_access.hosts_accessed).map((d, i) => ({l:d.label, v:d.count, c:i < 2 ? C.red : C.accent})), 140);
   hbar('#chart-categories', arr(data.destructive_commands.by_category).map((d, i) => ({l:d.label, v:d.count, c:i === 0 ? C.blue : i < 3 ? C.accent : C.red})), 120);
   hbar('#chart-rejected', arr(data.human_overrides.most_rejected_tools).map((d, i) => ({l:d.label, v:d.count, c:i === 0 ? C.green : i === 1 ? C.green : C.blue})), 110);
-  treemap('#chart-severity', [
-    {n:'Low', v:data.destructive_commands.low, c:C.muted},
-    {n:'Medium', v:data.destructive_commands.medium, c:C.blue},
+  severityStack('#chart-severity', [
+    {n:'Critical', v:data.destructive_commands.critical, c:C.red},
     {n:'High', v:data.destructive_commands.high, c:C.accent},
-    {n:'Critical', v:data.destructive_commands.critical, c:C.red}
+    {n:'Medium', v:data.destructive_commands.medium, c:C.blue},
+    {n:'Low', v:data.destructive_commands.low, c:C.muted}
   ]);
   donut('#chart-perm-donut', arr(data.permission_discipline.mode_distribution).map((d, i) => ({l:d.label, v:d.count, c:[C.red, C.accent, C.green, C.purple][i % 4]})), data.permission_discipline.prompt_total, `${Math.round(data.permission_discipline.bypass_pct)}%`);
-  hourBars('#chart-bypass-heat', arr(data.permission_discipline.bypass_by_hour));
+  hourBars('#chart-bypass-heat', arr(data.permission_discipline.bypass_by_hour), data.permission_discipline.prompt_total);
   document.getElementById('perm-legend').innerHTML = arr(data.permission_discipline.mode_distribution).map((d, i) => {
     const color = [C.red, C.accent, C.green, C.purple][i % 4];
     const pct = data.permission_discipline.prompt_total ? Math.round((d.count / data.permission_discipline.prompt_total) * 100) : 0;

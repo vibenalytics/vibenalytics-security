@@ -244,8 +244,8 @@ impl Rules {
             token_assignment_line: Regex::new(r#"\b[A-Z0-9_]*TOKEN[A-Z0-9_]*\s*=\s*[^\s"'`;]+"#).unwrap(),
             assignment_name: Regex::new(r#"([A-Z0-9_]+)\s*="#).unwrap(),
             postgres_urls: Regex::new(r#"\bpostgres(?:ql)?://[^\s"'`]+"#).unwrap(),
-            anthropic_tokens: Regex::new(r"\bsk-ant-[A-Za-z0-9\-_]+\b").unwrap(),
-            bearer_tokens: Regex::new(r"\bBearer\s+[A-Za-z0-9._\-]+\b").unwrap(),
+            anthropic_tokens: Regex::new(r"\bsk-ant-[A-Za-z0-9\-_]{20,}\b").unwrap(),
+            bearer_tokens: Regex::new(r"\bBearer\s+[A-Za-z0-9._\-]{20,}\b").unwrap(),
             mysql_urls: Regex::new(r#"\bmysql://[^\s"'`]+"#).unwrap(),
             private_key_block: Regex::new(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----").unwrap(),
             sensitive_path: Regex::new(r"(^|/)(\.env(?:\.[^/\s]+)?|docker-compose[^/\s]*\.ya?ml|secrets?[^/\s]*|credentials?[^/\s]*|id_rsa|id_ed25519)$").unwrap(),
@@ -413,6 +413,105 @@ fn classify_risk(rules: &Rules, command: &str) -> Option<(String, String, String
     None
 }
 
+/// Names that look like KEY/SECRET/TOKEN env vars but aren't credentials
+const NON_SECRET_NAMES: &[&str] = &[
+    "PRIMARY_KEY", "FOREIGN_KEY", "FOREIGN_KEY_CHECKS", "KEY_LENGTH",
+    "UNIQUE_KEY", "SORT_KEY", "CACHE_KEY", "INDEX_KEY", "PARTITION_KEY",
+    "SEARCH_TERM_KEY", "MAX_COUNT_KEY", "POST_TYPE_KEYS",
+    "EXCLUDED_POST_TYPE_KEYS", "POST_KEYS_CONVERSION_MAP",
+    "FOUND_SECRET", "SECRET_SCANNING", "SECRET_PATTERNS",
+    "MAX_MCP_OUTPUT_TOKENS", "MAX_THINKING_TOKENS", "MAX_TOKENS",
+    "AUTH_TOKEN_EXPIRED", "AUTH_TOKEN_INVALID",
+];
+
+fn is_false_positive_assignment(name: &str, value: &str) -> bool {
+    // Known non-secret variable names
+    if NON_SECRET_NAMES.iter().any(|n| name.eq_ignore_ascii_case(n)) {
+        return true;
+    }
+    // Shell command substitution: TOKEN=$(curl ...), TOKEN=$(echo ...)
+    if value.starts_with("$(") || value.starts_with("`") {
+        return true;
+    }
+    // Pure numeric values: MAX_TOKENS=50000
+    if value.chars().all(|c| c.is_ascii_digit()) && !value.is_empty() {
+        return true;
+    }
+    // Variable references: ${VAR}, ${{, process.env., os.environ
+    if value.starts_with("${") || value.starts_with("${{") {
+        return true;
+    }
+    if value.starts_with("process.") || value.starts_with("os.environ") || value.starts_with("os.getenv") {
+        return true;
+    }
+    // Self-referential: the tool's own output labels and prose
+    if value.ends_with("values") || value.ends_with("values</div><div") || value == "assignments</div><div" {
+        return true;
+    }
+    if value == "," || value == ":" || value == "value" || value == "value," {
+        return true;
+    }
+    let lv = value.to_ascii_lowercase();
+    // The tool's own text in reports: "TOKEN= regex", "TOKEN= and", etc.
+    if lv == "regex" || lv == "regex," || lv == "and" || lv == "assignment" || lv == "assignment," || lv == "**"
+        || lv == "remaining" || lv.starts_with("remaining ")
+    {
+        return true;
+    }
+    // Placeholders: your-*, <your-*, change-me-*, xxx, ..., placeholder tokens
+    if lv.starts_with("your") || lv.starts_with("<your") || lv.starts_with("<generate")
+        || lv.starts_with("<openssl") || lv.starts_with("<32-") || lv.starts_with("<token")
+        || lv.starts_with("\\u003c")
+        || lv == "xxx" || lv == "..." || lv.starts_with("...[")
+        || lv.starts_with("change-me") || lv.starts_with("change_this")
+        || lv == "\\"
+    {
+        return true;
+    }
+    // Placeholder tokens with xxxx patterns
+    if value.chars().filter(|c| *c == 'x').count() > 6 && value.len() < 40 {
+        return true;
+    }
+    // Redacted/truncated values: ****, ends with ...
+    if value.contains("****") || value.ends_with("...") {
+        return true;
+    }
+    // Values that are just the next env var (multiline .env leak: SECRET=\nNEXT_VAR=)
+    if value.starts_with('\n') || value.starts_with("\r\n") {
+        return true;
+    }
+    // Symfony/config file paths, not actual secret values
+    if value.starts_with("%kernel.") || value.starts_with("/config/") {
+        return true;
+    }
+    // Hash/config names that aren't secrets
+    if name.ends_with("_HASH") || name.starts_with("COOLIFY_BUILD_") {
+        return true;
+    }
+    // Arrow syntax (PHP/Ruby): EXCLUDED_POST_TYPE_KEYS =>
+    if value.starts_with('>') || value == "=>" {
+        return true;
+    }
+    // Filler/example values
+    if lv == "secret:" || lv.starts_with("[") {
+        return true;
+    }
+    // Known test-only dummy values
+    if lv == "abc123" || lv == "sk-1234" || lv.starts_with("a1b2c3") {
+        return true;
+    }
+    false
+}
+
+fn extract_assignment_value(matched: &str) -> &str {
+    if let Some(pos) = matched.find('=') {
+        let raw = &matched[pos + 1..];
+        raw.trim_start()
+    } else {
+        ""
+    }
+}
+
 fn count_assignment_pattern(
     regex: &Regex,
     name_regex: &Regex,
@@ -428,14 +527,31 @@ fn count_assignment_pattern(
         if !seen.insert(matched.clone()) {
             continue;
         }
-        inc(&mut tally.by_type, label, 1);
-        if let Some(cap) = name_regex.captures(&matched) {
-            let name = cap.get(1).map(|m| m.as_str()).unwrap_or(default_name);
-            inc(&mut tally.by_name, name, 1);
-            tally.name_projects.entry(name.to_string()).or_default().insert(project.to_string());
+        let name = name_regex
+            .captures(&matched)
+            .and_then(|c| c.get(1))
+            .map(|m| m.as_str())
+            .unwrap_or(default_name);
+        let value = extract_assignment_value(&matched);
+        if is_false_positive_assignment(name, value) {
+            continue;
         }
+        inc(&mut tally.by_type, label, 1);
+        inc(&mut tally.by_name, name, 1);
+        tally.name_projects.entry(name.to_string()).or_default().insert(project.to_string());
         *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
     }
+}
+
+fn is_localhost_url(url: &str) -> bool {
+    url.contains("localhost") || url.contains("127.0.0.1") || url.contains("@db:")
+        || url.contains("@database:") || url.contains("@postgres:")
+}
+
+fn is_placeholder_url(url: &str) -> bool {
+    let lv = url.to_ascii_lowercase();
+    lv.contains("user:password") || lv.contains("dummy:dummy") || lv.contains(":!changeme!")
+        || lv.contains("{user}") || lv.contains("${db_") || lv.contains("${postgres_")
 }
 
 fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut SecretTally) {
@@ -443,14 +559,23 @@ fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut Secre
     count_assignment_pattern(&rules.key_assignment_line, &rules.assignment_name, text, "KEY= values", "KEY", project, tally);
     count_assignment_pattern(&rules.token_assignment_line, &rules.assignment_name, text, "TOKEN= values", "TOKEN", project, tally);
 
-    let pg = rules.postgres_urls.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
-    if pg > 0 {
-        inc(&mut tally.by_type, "Postgres URLs", pg);
-        *tally.by_project.entry(project.to_string()).or_insert(0) += pg;
+    // Postgres URLs - split into local dev vs real credentials
+    let pg_matches: HashSet<String> = rules.postgres_urls.find_iter(text).map(|m| m.as_str().to_string()).collect();
+    for url in &pg_matches {
+        if is_placeholder_url(url) {
+            continue;
+        }
+        if is_localhost_url(url) {
+            inc(&mut tally.by_type, "Postgres URLs (local)", 1);
+        } else {
+            inc(&mut tally.by_type, "Postgres URLs (remote)", 1);
+            *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
+        }
     }
+
     let ant = rules.anthropic_tokens.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
     if ant > 0 {
-        inc(&mut tally.by_type, "Anthropic OAuth", ant);
+        inc(&mut tally.by_type, "Anthropic tokens", ant);
         inc(&mut tally.by_name, "sk-ant-*", ant);
         tally.name_projects.entry("sk-ant-*".to_string()).or_default().insert(project.to_string());
         *tally.by_project.entry(project.to_string()).or_insert(0) += ant;
@@ -460,10 +585,13 @@ fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut Secre
         inc(&mut tally.by_type, "Bearer tokens", bearer);
         *tally.by_project.entry(project.to_string()).or_insert(0) += bearer;
     }
-    let mysql = rules.mysql_urls.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
-    if mysql > 0 {
-        inc(&mut tally.by_type, "MySQL URLs", mysql);
-        *tally.by_project.entry(project.to_string()).or_insert(0) += mysql;
+    let mysql_matches: HashSet<String> = rules.mysql_urls.find_iter(text).map(|m| m.as_str().to_string()).collect();
+    for url in &mysql_matches {
+        if is_placeholder_url(url) || is_localhost_url(url) {
+            continue;
+        }
+        inc(&mut tally.by_type, "MySQL URLs", 1);
+        *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
     }
     let pkey = rules.private_key_block.find_iter(text).count() as u32;
     if pkey > 0 {
@@ -491,7 +619,8 @@ fn weighted_secret_risk(
     secret_values: u32,
     key_values: u32,
     token_values: u32,
-    postgres_urls: u32,
+    postgres_remote: u32,
+    postgres_local: u32,
     anthropic_tokens: u32,
     bearer_tokens: u32,
     mysql_urls: u32,
@@ -502,7 +631,8 @@ fn weighted_secret_risk(
     secret_values as f64 * 1.5
         + key_values as f64 * 1.0
         + token_values as f64 * 1.2
-        + postgres_urls as f64 * 2.5
+        + postgres_remote as f64 * 3.5
+        + postgres_local as f64 * 0.3
         + anthropic_tokens as f64 * 4.0
         + bearer_tokens as f64 * 3.5
         + mysql_urls as f64 * 2.5
@@ -724,8 +854,9 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
     let secret_values = *secrets.by_type.get("SECRET= values").unwrap_or(&0);
     let key_values = *secrets.by_type.get("KEY= values").unwrap_or(&0);
     let token_values = *secrets.by_type.get("TOKEN= values").unwrap_or(&0);
-    let postgres_urls = *secrets.by_type.get("Postgres URLs").unwrap_or(&0);
-    let anthropic_tokens = *secrets.by_type.get("Anthropic OAuth").unwrap_or(&0);
+    let postgres_remote = *secrets.by_type.get("Postgres URLs (remote)").unwrap_or(&0);
+    let postgres_local = *secrets.by_type.get("Postgres URLs (local)").unwrap_or(&0);
+    let anthropic_tokens = *secrets.by_type.get("Anthropic tokens").unwrap_or(&0);
     let bearer_tokens = *secrets.by_type.get("Bearer tokens").unwrap_or(&0);
     let mysql_urls = *secrets.by_type.get("MySQL URLs").unwrap_or(&0);
     let private_key_blocks = *secrets.by_type.get("Private key blocks").unwrap_or(&0);
@@ -735,7 +866,8 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
             secret_values,
             key_values,
             token_values,
-            postgres_urls,
+            postgres_remote,
+            postgres_local,
             anthropic_tokens,
             bearer_tokens,
             mysql_urls,

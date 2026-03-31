@@ -1,9 +1,9 @@
 {
   "hero": {
     "report_title": "Claude Code Security Report",
-    "transcript_count": 1967,
+    "transcript_count": 1966,
     "project_count": 70,
-    "total_entries": 341527,
+    "total_entries": 339187,
     "date_range": {
       "start": "2026-01-12",
       "end": "2026-03-31"
@@ -11,12 +11,12 @@
     "include_subagents": true
   },
   "scores": {
-    "overall": 25,
-    "secrets": 0,
+    "overall": 32,
+    "secrets": 25,
     "remote_access": 56,
-    "permissions": 28,
+    "permissions": 27,
     "commands": 22,
-    "agent_oversight": 33,
+    "agent_oversight": 32,
     "weights": {
       "secrets": 30,
       "permissions": 25,
@@ -26,162 +26,166 @@
     }
   },
   "secret_exposure": {
-    "total_secrets": 1489,
+    "total_secrets": 705,
     "sensitive_reads": 228,
     "env_writes": 56,
     "env_paths": 26,
     "secret_types": [
       {
-        "label": "SECRET= values",
-        "count": 395
-      },
-      {
         "label": "KEY= values",
-        "count": 393
+        "count": 282
       },
       {
-        "label": "Postgres URLs",
-        "count": 277
+        "label": "SECRET= values",
+        "count": 206
+      },
+      {
+        "label": "Postgres URLs (remote)",
+        "count": 73
+      },
+      {
+        "label": "Postgres URLs (local)",
+        "count": 67
+      },
+      {
+        "label": "Anthropic tokens",
+        "count": 39
       },
       {
         "label": "Bearer tokens",
-        "count": 224
-      },
-      {
-        "label": "Anthropic OAuth",
-        "count": 144
+        "count": 22
       },
       {
         "label": "TOKEN= values",
-        "count": 43
+        "count": 14
       },
       {
-        "label": "MySQL URLs",
-        "count": 13
+        "label": "Private key blocks",
+        "count": 2
       }
     ],
     "most_exposed": [
       {
-        "secret": "sk-ant-*",
-        "hits": 144,
-        "projects": 5
-      },
-      {
-        "secret": "JWT_SECRET",
-        "hits": 141,
-        "projects": 6
-      },
-      {
         "secret": "RESEND_API_KEY",
-        "hits": 141,
-        "projects": 6
+        "hits": 129,
+        "projects": 7
       },
       {
         "secret": "GOOGLE_CLIENT_SECRET",
-        "hits": 106,
-        "projects": 4
+        "hits": 96,
+        "projects": 5
       },
       {
         "secret": "ENCRYPTION_KEY",
-        "hits": 98,
-        "projects": 4
+        "hits": 85,
+        "projects": 5
       },
       {
         "secret": "GH_OAUTH_CLIENT_SECRET",
-        "hits": 52,
-        "projects": 3
-      },
-      {
-        "secret": "JWT_SECRET_KEY",
-        "hits": 30,
-        "projects": 3
-      },
-      {
-        "secret": "TOKEN",
-        "hits": 27,
+        "hits": 42,
         "projects": 4
       },
       {
-        "secret": "API_KEY",
+        "secret": "sk-ant-*",
+        "hits": 39,
+        "projects": 5
+      },
+      {
+        "secret": "RECAPTCHA_SECRET_KEY",
         "hits": 26,
         "projects": 3
       },
       {
+        "secret": "JWT_SECRET",
+        "hits": 23,
+        "projects": 2
+      },
+      {
         "secret": "APP_SECRET",
-        "hits": 26,
+        "hits": 18,
+        "projects": 4
+      },
+      {
+        "secret": "AWS_S3_SECRET_ACCESS_KEY",
+        "hits": 14,
+        "projects": 2
+      },
+      {
+        "secret": "MAILCHIMP_API_KEY",
+        "hits": 13,
         "projects": 3
       }
     ],
     "exposure_by_project": [
       {
-        "project": "Vibe/claudnalytics",
-        "reads": 72,
-        "secrets": 661,
-        "writes": 3,
-        "total": 736
-      },
-      {
         "project": "PagespeedBulk",
         "reads": 68,
-        "secrets": 316,
+        "secrets": 223,
         "writes": 45,
-        "total": 429
+        "total": 336
+      },
+      {
+        "project": "Vibe/claudnalytics",
+        "reads": 72,
+        "secrets": 130,
+        "writes": 3,
+        "total": 205
+      },
+      {
+        "project": "Vibenalytics/vibenalytics",
+        "reads": 0,
+        "secrets": 132,
+        "writes": 0,
+        "total": 132
       },
       {
         "project": "claudnalytics/claudnalytics",
         "reads": 28,
-        "secrets": 142,
-        "writes": 0,
-        "total": 170
-      },
-      {
-        "project": "Diploma/monad",
-        "reads": 21,
-        "secrets": 93,
-        "writes": 0,
-        "total": 114
-      },
-      {
-        "project": "TP/genboard",
-        "reads": 4,
-        "secrets": 60,
+        "secrets": 36,
         "writes": 0,
         "total": 64
       },
       {
         "project": "Webgate/socksfor1.com",
         "reads": 4,
-        "secrets": 42,
+        "secrets": 40,
         "writes": 3,
-        "total": 49
+        "total": 47
+      },
+      {
+        "project": "Diploma/monad",
+        "reads": 21,
+        "secrets": 23,
+        "writes": 0,
+        "total": 44
       },
       {
         "project": "Webgate/context-base",
         "reads": 7,
-        "secrets": 39,
+        "secrets": 22,
         "writes": 2,
-        "total": 48
-      },
-      {
-        "project": "Vibenalytics/vibenalytics",
-        "reads": 0,
-        "secrets": 36,
-        "writes": 0,
-        "total": 36
+        "total": 31
       },
       {
         "project": "Webgate/gamename.live",
         "reads": 4,
-        "secrets": 24,
+        "secrets": 19,
         "writes": 1,
-        "total": 29
+        "total": 24
       },
       {
-        "project": "-Users-martinvanco-Documents-Webgate-Vibe-bytyfi-late-publishing",
-        "reads": 1,
-        "secrets": 12,
+        "project": "TP/genboard",
+        "reads": 4,
+        "secrets": 4,
         "writes": 0,
-        "total": 13
+        "total": 8
+      },
+      {
+        "project": "Wincent/wincent-careers",
+        "reads": 8,
+        "secrets": 0,
+        "writes": 0,
+        "total": 8
       }
     ]
   },
@@ -238,19 +242,19 @@
         "date": "2026-03-12",
         "commands": 99,
         "top_host": "webgate.codes",
-        "activity_summary": "Uptime / DB activity"
+        "activity_summary": "Interactive / non-command SSH"
       },
       {
         "date": "2026-03-13",
         "commands": 83,
         "top_host": "veridas-staging",
-        "activity_summary": "WordPress / WP-CLI"
+        "activity_summary": "Docker / psql / JWT"
       },
       {
         "date": "2026-03-16",
         "commands": 197,
         "top_host": "veridas-staging",
-        "activity_summary": "Remote execution"
+        "activity_summary": "Interactive / non-command SSH"
       },
       {
         "date": "2026-03-18",
@@ -262,13 +266,13 @@
         "date": "2026-03-23",
         "commands": 143,
         "top_host": "veridas-staging",
-        "activity_summary": "WordPress / WP-CLI"
+        "activity_summary": "Remote execution"
       },
       {
         "date": "2026-03-24",
         "commands": 34,
         "top_host": "vibenalytics",
-        "activity_summary": "Interactive / non-command SSH"
+        "activity_summary": "Docker / psql / JWT"
       },
       {
         "date": "2026-03-25",
@@ -286,30 +290,30 @@
         "date": "2026-03-28",
         "commands": 21,
         "top_host": "api.webgate.tech",
-        "activity_summary": "Remote execution"
+        "activity_summary": "Docker / psql / JWT"
       },
       {
         "date": "2026-03-31",
         "commands": 231,
         "top_host": "veridas-staging",
-        "activity_summary": "Uptime / DB activity"
+        "activity_summary": "WordPress / WP-CLI"
       }
     ]
   },
   "destructive_commands": {
-    "total_flagged": 1082,
+    "total_flagged": 1071,
     "critical": 5,
-    "high": 588,
+    "high": 589,
     "medium": 10,
-    "low": 479,
+    "low": 467,
     "severity_distribution": [
       {
         "label": "high",
-        "count": 588
+        "count": 589
       },
       {
         "label": "low",
-        "count": 479
+        "count": 467
       },
       {
         "label": "medium",
@@ -327,7 +331,7 @@
       },
       {
         "label": "npx execution",
-        "count": 479
+        "count": 467
       },
       {
         "label": "push to main",
@@ -335,7 +339,7 @@
       },
       {
         "label": "rm -rf",
-        "count": 33
+        "count": 34
       },
       {
         "label": "docker rm",
@@ -367,7 +371,7 @@
       },
       {
         "kind": "rm -rf",
-        "count": 33,
+        "count": 34,
         "risk": "HIGH"
       },
       {
@@ -394,20 +398,20 @@
     }
   },
   "permission_discipline": {
-    "prompt_total": 4348,
-    "bypass_pct": 42.43,
+    "prompt_total": 4342,
+    "bypass_pct": 43.09,
     "mode_distribution": [
       {
         "label": "bypassPermissions",
-        "count": 1845
+        "count": 1871
       },
       {
         "label": "acceptEdits",
-        "count": 1620
+        "count": 1599
       },
       {
         "label": "default",
-        "count": 875
+        "count": 864
       },
       {
         "label": "plan",
@@ -465,7 +469,7 @@
       },
       {
         "hour": 17,
-        "bypass_prompts": 33
+        "bypass_prompts": 40
       },
       {
         "hour": 18,
@@ -473,11 +477,11 @@
       },
       {
         "hour": 19,
-        "bypass_prompts": 79
+        "bypass_prompts": 91
       },
       {
         "hour": 20,
-        "bypass_prompts": 92
+        "bypass_prompts": 99
       },
       {
         "hour": 21,
@@ -537,9 +541,9 @@
       },
       {
         "project": "claudnalytics/claudnalytics",
-        "prompts": 206,
-        "bypass_prompts": 110,
-        "bypass_pct": 53.4,
+        "prompts": 210,
+        "bypass_prompts": 114,
+        "bypass_pct": 54.29,
         "risk": "HIGH"
       },
       {
@@ -551,38 +555,38 @@
       },
       {
         "project": "Vibe/claudnalytics",
-        "prompts": 1658,
+        "prompts": 1638,
         "bypass_prompts": 698,
-        "bypass_pct": 42.1,
+        "bypass_pct": 42.61,
         "risk": "MEDIUM"
       },
       {
-        "project": "Vibe/electree-wizard",
-        "prompts": 70,
-        "bypass_prompts": 28,
-        "bypass_pct": 40.0,
+        "project": "Webgate/context-base",
+        "prompts": 826,
+        "bypass_prompts": 331,
+        "bypass_pct": 40.07,
         "risk": "MEDIUM"
       }
     ]
   },
   "autonomous_agents": {
-    "agents_spawned": 768,
-    "in_bypass_mode": 474,
+    "agents_spawned": 759,
+    "in_bypass_mode": 475,
     "from_top_project": {
       "project": "Vibe/claudnalytics",
-      "count": 405
+      "count": 403
     },
     "rejections": 30
   },
   "human_overrides": {
-    "denials": 297,
-    "interrupts": 597,
+    "denials": 293,
+    "interrupts": 595,
     "destructive_catches": 16,
-    "override_rate": 20.56,
+    "override_rate": 20.45,
     "most_rejected_tools": [
       {
         "label": "Bash",
-        "count": 166
+        "count": 163
       },
       {
         "label": "Agent",
@@ -594,7 +598,7 @@
       },
       {
         "label": "Edit",
-        "count": 14
+        "count": 13
       },
       {
         "label": "ExitPlanMode",
@@ -627,12 +631,12 @@
       {
         "priority": "P0",
         "title": "Secret-like exposure",
-        "description": "1489 secret-like values or credentials were exposed in transcript context."
+        "description": "705 secret-like values or credentials were exposed in transcript context."
       },
       {
         "priority": "P0",
         "title": "Bypass-mode agents",
-        "description": "474 spawned agents ran under bypassPermissions."
+        "description": "475 spawned agents ran under bypassPermissions."
       },
       {
         "priority": "P1",
@@ -642,7 +646,7 @@
       {
         "priority": "P1",
         "title": "High-bypass workflows",
-        "description": "1845 prompts ran in bypassPermissions mode."
+        "description": "1871 prompts ran in bypassPermissions mode."
       },
       {
         "priority": "P2",
@@ -656,7 +660,7 @@
     ]
   },
   "stability": {
-    "api_errors": 429,
-    "compactions": 443
+    "api_errors": 430,
+    "compactions": 442
   }
 }
