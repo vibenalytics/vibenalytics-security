@@ -140,14 +140,16 @@ pub struct PermissionDiscipline {
     pub prompt_total: u32,
     pub bypass_pct: f64,
     pub mode_distribution: Vec<LabeledCount>,
-    pub bypass_by_hour: Vec<HourCount>,
+    pub modes_by_hour: Vec<HourModes>,
     pub highest_bypass_projects: Vec<ProjectRiskRow>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct HourCount {
+pub struct HourModes {
     pub hour: u8,
-    pub bypass_prompts: u32,
+    pub bypass: u32,
+    pub accept_edits: u32,
+    pub default: u32,
 }
 
 #[derive(Debug, Serialize)]
@@ -731,7 +733,7 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
     let mut mode_counts: HashMap<String, u32> = HashMap::new();
     let mut prompt_counts_by_project: HashMap<String, u32> = HashMap::new();
     let mut bypass_counts_by_project: HashMap<String, u32> = HashMap::new();
-    let mut bypass_by_hour: HashMap<u8, u32> = HashMap::new();
+    let mut modes_by_hour: HashMap<u8, [u32; 3]> = HashMap::new(); // [bypass, acceptEdits, default]
 
     let mut agent_total = 0u32;
     let mut agent_bypass = 0u32;
@@ -752,15 +754,25 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
         for prompt in &session.prompts {
             if !session.is_subagent {
                 if let Some(mode) = prompt.permission_mode.clone() {
+                    // Skip negligible modes like "plan"
+                    if mode == "plan" {
+                        continue;
+                    }
                     *mode_counts.entry(mode.clone()).or_insert(0) += 1;
                     *prompt_counts_by_project.entry(session.project.clone()).or_insert(0) += 1;
-                    if mode == "bypassPermissions" {
-                        *bypass_counts_by_project.entry(session.project.clone()).or_insert(0) += 1;
-                        if let Some(hour_str) = prompt.timestamp.get(11..13) {
-                            if let Ok(hour) = hour_str.parse::<u8>() {
-                                *bypass_by_hour.entry(hour).or_insert(0) += 1;
+                    if let Some(hour_str) = prompt.timestamp.get(11..13) {
+                        if let Ok(hour) = hour_str.parse::<u8>() {
+                            let entry = modes_by_hour.entry(hour).or_insert([0; 3]);
+                            match mode.as_str() {
+                                "bypassPermissions" => entry[0] += 1,
+                                "acceptEdits" => entry[1] += 1,
+                                "default" => entry[2] += 1,
+                                _ => {}
                             }
                         }
+                    }
+                    if mode == "bypassPermissions" {
+                        *bypass_counts_by_project.entry(session.project.clone()).or_insert(0) += 1;
                     }
                 }
                 count_secret_text(&rules, &prompt.text, &session.project, &mut secrets);
@@ -1141,10 +1153,15 @@ pub fn analyze(sessions: Vec<ParsedSession>, include_subagents: bool) -> Report 
             prompt_total,
             bypass_pct: round2(bypass_pct),
             mode_distribution,
-            bypass_by_hour: {
-                let mut items: Vec<HourCount> = bypass_by_hour
+            modes_by_hour: {
+                let mut items: Vec<HourModes> = modes_by_hour
                     .into_iter()
-                    .map(|(hour, bypass_prompts)| HourCount { hour, bypass_prompts })
+                    .map(|(hour, counts)| HourModes {
+                        hour,
+                        bypass: counts[0],
+                        accept_edits: counts[1],
+                        default: counts[2],
+                    })
                     .collect();
                 items.sort_by(|a, b| a.hour.cmp(&b.hour));
                 items

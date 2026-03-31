@@ -202,14 +202,20 @@ function donut(id, data, total, centerText) {
   g.append('text').attr('text-anchor', 'middle').attr('y', 16).attr('font-size', 10).attr('fill', C.sec).text('bypass share');
 }
 
-function hourBars(id, data, totalPrompts) {
+function hourBars(id, data) {
+  const modes = [
+    {key: 'bypass', label: 'bypassPermissions', color: C.red},
+    {key: 'accept_edits', label: 'acceptEdits', color: C.accent},
+    {key: 'default', label: 'default', color: C.green},
+  ];
   const items = data.slice().sort((a, b) => a.hour - b.hour);
   const m = {top:10,right:12,bottom:28,left:30}, w = 520, h = 220;
   const innerW = w - m.left - m.right, innerH = h - m.top - m.bottom;
   const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
   const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
   const x = d3.scaleBand().domain(items.map(d => d.hour)).range([0, innerW]).padding(0.18);
-  const y = d3.scaleLinear().domain([0, d3.max(items, d => d.bypass_prompts) || 1]).nice().range([innerH, 0]);
+  const maxTotal = d3.max(items, d => (d.bypass || 0) + (d.accept_edits || 0) + (d.default || 0)) || 1;
+  const y = d3.scaleLinear().domain([0, maxTotal]).nice().range([innerH, 0]);
 
   g.append('g')
     .attr('transform', `translate(0,${innerH})`)
@@ -222,42 +228,42 @@ function hourBars(id, data, totalPrompts) {
     .call(g => g.selectAll('text').attr('fill', C.muted).attr('font-size', 10))
     .call(g => g.selectAll('path,line').attr('stroke', '#2d2d34'));
 
-  g.selectAll('rect.bar')
-    .data(items)
-    .join('rect')
-    .attr('class', 'bar')
-    .attr('x', d => x(d.hour))
-    .attr('y', innerH)
-    .attr('width', x.bandwidth())
-    .attr('height', 0)
-    .attr('rx', 3)
-    .attr('fill', C.red)
-    .attr('opacity', 0.85)
-    .on('mouseover', (ev, d) => {
-      const pct = totalPrompts ? ((d.bypass_prompts / totalPrompts) * 100).toFixed(1) : '0';
-      showTip(ev, `<div>${String(d.hour).padStart(2,'0')}:00</div><div><strong>${d.bypass_prompts}</strong> bypass prompts (${pct}%)</div>`);
-    })
-    .on('mouseout', hideTip)
-    .transition()
-    .duration(700)
-    .delay((_, i) => i * 20)
-    .attr('y', d => y(d.bypass_prompts))
-    .attr('height', d => innerH - y(d.bypass_prompts));
+  // Stacked bars: bypass at bottom, acceptEdits middle, default on top
+  items.forEach((d, i) => {
+    let cumY = innerH;
+    const total = (d.bypass || 0) + (d.accept_edits || 0) + (d.default || 0);
+    modes.forEach(mode => {
+      const val = d[mode.key] || 0;
+      if (val === 0) return;
+      const barH = innerH - y(val);
+      cumY -= barH;
+      g.append('rect')
+        .attr('x', x(d.hour)).attr('y', innerH).attr('width', x.bandwidth()).attr('height', 0)
+        .attr('fill', mode.color).attr('opacity', 0.85)
+        .on('mouseover', ev => {
+          const pct = total ? ((val / total) * 100).toFixed(0) : '0';
+          showTip(ev, `<div>${String(d.hour).padStart(2,'0')}:00 — ${mode.label}</div><div><strong>${val}</strong> prompts (${pct}% of hour)</div><div style="color:${C.muted};font-size:11px">${total} total this hour</div>`);
+        })
+        .on('mouseout', hideTip)
+        .transition().duration(700).delay(i * 20)
+        .attr('y', cumY).attr('height', barH);
+    });
 
-  // Percentage labels on top of bars
-  g.selectAll('text.pct')
-    .data(items)
-    .join('text')
-    .attr('class', 'pct')
-    .attr('x', d => x(d.hour) + x.bandwidth() / 2)
-    .attr('y', d => y(d.bypass_prompts) - 4)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', 8)
-    .attr('font-family', "'JetBrains Mono', monospace")
-    .attr('fill', C.sec)
-    .attr('opacity', 0)
-    .text(d => totalPrompts ? ((d.bypass_prompts / totalPrompts) * 100).toFixed(1) + '%' : '')
-    .transition().duration(400).delay((_, i) => i * 20 + 600).attr('opacity', 1);
+    // Percentage label: bypass share of this hour
+    if (total > 0) {
+      const bypassPct = ((d.bypass || 0) / total * 100).toFixed(0);
+      g.append('text')
+        .attr('x', x(d.hour) + x.bandwidth() / 2)
+        .attr('y', y(total) - 4)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 8)
+        .attr('font-family', "'JetBrains Mono', monospace")
+        .attr('fill', C.sec)
+        .attr('opacity', 0)
+        .text(bypassPct + '%')
+        .transition().duration(400).delay(i * 20 + 600).attr('opacity', 1);
+    }
+  });
 }
 
 function statCard(num, label, detail, color='var(--text)') {
@@ -334,7 +340,7 @@ function render(data) {
     <div class="section-desc">${data.permission_discipline.bypass_pct}% of all work runs in bypassPermissions.</div>
     <div class="two-col" style="margin-bottom:16px">
       <div class="glass" style="text-align:center"><div class="chart-title">Mode Distribution</div><div class="chart-subtitle">${data.permission_discipline.prompt_total} prompts across all modes.</div><div id="chart-perm-donut" style="max-width:280px;margin:0 auto"></div><div id="perm-legend" class="perm-legend"></div></div>
-      <div class="glass"><div class="chart-title">Bypass by Hour</div><div class="chart-subtitle">Hourly distribution of bypass-mode prompts.</div><div id="chart-bypass-heat"></div></div>
+      <div class="glass"><div class="chart-title">Prompts by Hour</div><div class="chart-subtitle">All permission modes stacked. % label = bypass share of that hour.</div><div id="chart-bypass-heat"></div></div>
     </div>
     <div class="glass"><div class="chart-title" style="color:var(--red)">Highest Bypass Projects</div><table class="data-table"><thead><tr><th>Project</th><th>Bypass Rate</th><th>Prompts</th><th>Risk</th></tr></thead><tbody id="tbl-project-risk"></tbody></table></div>
   </div>
@@ -412,7 +418,7 @@ function render(data) {
     {n:'Low', v:data.destructive_commands.low, c:C.muted}
   ]);
   donut('#chart-perm-donut', arr(data.permission_discipline.mode_distribution).map((d, i) => ({l:d.label, v:d.count, c:[C.red, C.accent, C.green, C.purple][i % 4]})), data.permission_discipline.prompt_total, `${Math.round(data.permission_discipline.bypass_pct)}%`);
-  hourBars('#chart-bypass-heat', arr(data.permission_discipline.bypass_by_hour), data.permission_discipline.prompt_total);
+  hourBars('#chart-bypass-heat', arr(data.permission_discipline.modes_by_hour));
   document.getElementById('perm-legend').innerHTML = arr(data.permission_discipline.mode_distribution).map((d, i) => {
     const color = [C.red, C.accent, C.green, C.purple][i % 4];
     const pct = data.permission_discipline.prompt_total ? Math.round((d.count / data.permission_discipline.prompt_total) * 100) : 0;

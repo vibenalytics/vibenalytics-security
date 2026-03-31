@@ -3,7 +3,7 @@
     "report_title": "Claude Code Security Report",
     "transcript_count": 1966,
     "project_count": 70,
-    "total_entries": 339283,
+    "total_entries": 339381,
     "date_range": {
       "start": "2026-01-12",
       "end": "2026-03-31"
@@ -26,18 +26,18 @@
     }
   },
   "secret_exposure": {
-    "total_secrets": 582,
+    "total_secrets": 586,
     "sensitive_reads": 228,
     "env_writes": 56,
     "env_paths": 26,
     "secret_types": [
       {
         "label": "KEY= values",
-        "count": 207
+        "count": 208
       },
       {
         "label": "SECRET= values",
-        "count": 159
+        "count": 160
       },
       {
         "label": "Postgres URLs (local)",
@@ -53,11 +53,11 @@
       },
       {
         "label": "Anthropic tokens",
-        "count": 26
+        "count": 27
       },
       {
         "label": "TOKEN= values",
-        "count": 13
+        "count": 14
       },
       {
         "label": "Private key blocks",
@@ -87,7 +87,7 @@
       },
       {
         "secret": "sk-ant-*",
-        "hits": 26,
+        "hits": 27,
         "projects": 4
       },
       {
@@ -127,9 +127,9 @@
       {
         "project": "Vibenalytics/vibenalytics",
         "reads": 0,
-        "secrets": 173,
+        "secrets": 177,
         "writes": 0,
-        "total": 173
+        "total": 177
       },
       {
         "project": "Vibe/claudnalytics",
@@ -242,31 +242,31 @@
         "date": "2026-03-12",
         "commands": 99,
         "top_host": "webgate.codes",
-        "activity_summary": "Remote execution"
+        "activity_summary": "Interactive / non-command SSH"
       },
       {
         "date": "2026-03-13",
         "commands": 83,
         "top_host": "veridas-staging",
-        "activity_summary": "WordPress / WP-CLI"
+        "activity_summary": "Docker / psql / JWT"
       },
       {
         "date": "2026-03-16",
         "commands": 197,
         "top_host": "veridas-staging",
-        "activity_summary": "Interactive / non-command SSH"
+        "activity_summary": "WordPress / WP-CLI"
       },
       {
         "date": "2026-03-18",
         "commands": 76,
         "top_host": "cloud@orb",
-        "activity_summary": "Uptime / DB activity"
+        "activity_summary": "WordPress / WP-CLI"
       },
       {
         "date": "2026-03-23",
         "commands": 143,
         "top_host": "veridas-staging",
-        "activity_summary": "Remote execution"
+        "activity_summary": "Interactive / non-command SSH"
       },
       {
         "date": "2026-03-24",
@@ -278,7 +278,7 @@
         "date": "2026-03-25",
         "commands": 37,
         "top_host": "vibenalytics@orb",
-        "activity_summary": "Interactive / non-command SSH"
+        "activity_summary": "Remote execution"
       },
       {
         "date": "2026-03-26",
@@ -296,7 +296,7 @@
         "date": "2026-03-31",
         "commands": 231,
         "top_host": "veridas-staging",
-        "activity_summary": "WordPress / WP-CLI"
+        "activity_summary": "Interactive / non-command SSH"
       }
     ]
   },
@@ -398,102 +398,136 @@
     }
   },
   "permission_discipline": {
-    "prompt_total": 4346,
-    "bypass_pct": 43.07,
+    "prompt_total": 4344,
+    "bypass_pct": 43.14,
     "mode_distribution": [
       {
         "label": "bypassPermissions",
-        "count": 1872
+        "count": 1874
       },
       {
         "label": "acceptEdits",
-        "count": 1602
+        "count": 1606
       },
       {
         "label": "default",
         "count": 864
-      },
-      {
-        "label": "plan",
-        "count": 8
       }
     ],
-    "bypass_by_hour": [
+    "modes_by_hour": [
       {
         "hour": 0,
-        "bypass_prompts": 143
+        "bypass": 143,
+        "accept_edits": 163,
+        "default": 81
       },
       {
         "hour": 1,
-        "bypass_prompts": 24
+        "bypass": 24,
+        "accept_edits": 77,
+        "default": 9
       },
       {
         "hour": 2,
-        "bypass_prompts": 4
+        "bypass": 4,
+        "accept_edits": 25,
+        "default": 1
       },
       {
         "hour": 8,
-        "bypass_prompts": 31
+        "bypass": 31,
+        "accept_edits": 10,
+        "default": 21
       },
       {
         "hour": 9,
-        "bypass_prompts": 91
+        "bypass": 91,
+        "accept_edits": 40,
+        "default": 80
       },
       {
         "hour": 10,
-        "bypass_prompts": 94
+        "bypass": 94,
+        "accept_edits": 78,
+        "default": 94
       },
       {
         "hour": 11,
-        "bypass_prompts": 70
+        "bypass": 70,
+        "accept_edits": 72,
+        "default": 44
       },
       {
         "hour": 12,
-        "bypass_prompts": 180
+        "bypass": 180,
+        "accept_edits": 110,
+        "default": 35
       },
       {
         "hour": 13,
-        "bypass_prompts": 202
+        "bypass": 202,
+        "accept_edits": 119,
+        "default": 55
       },
       {
         "hour": 14,
-        "bypass_prompts": 111
+        "bypass": 111,
+        "accept_edits": 49,
+        "default": 82
       },
       {
         "hour": 15,
-        "bypass_prompts": 46
+        "bypass": 46,
+        "accept_edits": 78,
+        "default": 77
       },
       {
         "hour": 16,
-        "bypass_prompts": 67
+        "bypass": 67,
+        "accept_edits": 39,
+        "default": 7
       },
       {
         "hour": 17,
-        "bypass_prompts": 40
+        "bypass": 40,
+        "accept_edits": 55,
+        "default": 59
       },
       {
         "hour": 18,
-        "bypass_prompts": 107
+        "bypass": 107,
+        "accept_edits": 55,
+        "default": 27
       },
       {
         "hour": 19,
-        "bypass_prompts": 91
+        "bypass": 91,
+        "accept_edits": 71,
+        "default": 24
       },
       {
         "hour": 20,
-        "bypass_prompts": 99
+        "bypass": 99,
+        "accept_edits": 96,
+        "default": 51
       },
       {
         "hour": 21,
-        "bypass_prompts": 193
+        "bypass": 195,
+        "accept_edits": 76,
+        "default": 39
       },
       {
         "hour": 22,
-        "bypass_prompts": 155
+        "bypass": 155,
+        "accept_edits": 161,
+        "default": 22
       },
       {
         "hour": 23,
-        "bypass_prompts": 124
+        "bypass": 124,
+        "accept_edits": 232,
+        "default": 56
       }
     ],
     "highest_bypass_projects": [
@@ -533,17 +567,17 @@
         "risk": "HIGH"
       },
       {
+        "project": "claudnalytics/claudnalytics",
+        "prompts": 204,
+        "bypass_prompts": 114,
+        "bypass_pct": 55.88,
+        "risk": "HIGH"
+      },
+      {
         "project": "Diploma/monad",
         "prompts": 147,
         "bypass_prompts": 82,
         "bypass_pct": 55.78,
-        "risk": "HIGH"
-      },
-      {
-        "project": "claudnalytics/claudnalytics",
-        "prompts": 210,
-        "bypass_prompts": 114,
-        "bypass_pct": 54.29,
         "risk": "HIGH"
       },
       {
@@ -555,16 +589,16 @@
       },
       {
         "project": "Vibe/claudnalytics",
-        "prompts": 1638,
+        "prompts": 1637,
         "bypass_prompts": 698,
-        "bypass_pct": 42.61,
+        "bypass_pct": 42.64,
         "risk": "MEDIUM"
       },
       {
         "project": "Webgate/context-base",
-        "prompts": 826,
+        "prompts": 825,
         "bypass_prompts": 331,
-        "bypass_pct": 40.07,
+        "bypass_pct": 40.12,
         "risk": "MEDIUM"
       }
     ]
@@ -582,7 +616,7 @@
     "denials": 293,
     "interrupts": 595,
     "destructive_catches": 16,
-    "override_rate": 20.43,
+    "override_rate": 20.44,
     "most_rejected_tools": [
       {
         "label": "Bash",
@@ -631,7 +665,7 @@
       {
         "priority": "P0",
         "title": "Secret-like exposure",
-        "description": "582 secret-like values or credentials were exposed in transcript context."
+        "description": "586 secret-like values or credentials were exposed in transcript context."
       },
       {
         "priority": "P0",
@@ -646,7 +680,7 @@
       {
         "priority": "P1",
         "title": "High-bypass workflows",
-        "description": "1872 prompts ran in bypassPermissions mode."
+        "description": "1874 prompts ran in bypassPermissions mode."
       },
       {
         "priority": "P2",
