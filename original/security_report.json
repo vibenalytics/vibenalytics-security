@@ -1,0 +1,568 @@
+{
+  "agents": {
+    "by_project": {
+      "4/ROC/OZNAL": 2,
+      "4/ROC/VD": 16,
+      "CLOUD/project/frontend": 2,
+      "FIIT/Diploma/monad": 13,
+      "PagespeedBulk": 15,
+      "ROC/TP/genboard": 13,
+      "Vibe/claudnalytics/claudnalytics": 22,
+      "Vibe/electree/wizard": 1,
+      "Vibe/upfan/landing": 13,
+      "Vibenalytics/vibenalytics": 33,
+      "Webgate/Levosphere/levosphere": 1,
+      "Webgate/Vibe/claudnalytics": 263,
+      "Webgate/context/base": 43,
+      "Webgate/gamename/live": 5,
+      "Webgate/lunter": 4,
+      "Webgate/socksfor1/com": 2,
+      "Wincent/wincent/careers": 2,
+      "monad/mobile/app": 20
+    },
+    "bypass": 321,
+    "bypass_pct": 68.3,
+    "total": 470
+  },
+  "generated_at": "2026-03-30T21:42:11",
+  "human_overrides": {
+    "denials": 1110,
+    "denied_tools": {
+      "Agent": 30,
+      "AskUserQuestion": 4,
+      "Bash": 591,
+      "Edit": 100,
+      "ExitPlanMode": 14,
+      "Glob": 14,
+      "Grep": 16,
+      "Read": 167,
+      "ReadMcpResourceTool": 2,
+      "TaskOutput": 6,
+      "WebFetch": 69,
+      "WebSearch": 1,
+      "Write": 20,
+      "mcp__claude_ai_Gmail__gmail_create_draft": 3,
+      "mcp__claude_ai_Gmail__gmail_read_message": 1,
+      "mcp__claude_ai_Notion__notion-create-pages": 2,
+      "mcp__claude_ai_Notion__notion-search": 1,
+      "mcp__google-workspace__create_spreadsheet": 10,
+      "mcp__google-workspace__draft_gmail_message": 5,
+      "mcp__google-workspace__get_doc_as_markdown": 9,
+      "mcp__google-workspace__get_doc_content": 4,
+      "mcp__google-workspace__get_gmail_thread_content": 1,
+      "mcp__google-workspace__get_spreadsheet_info": 1,
+      "mcp__google-workspace__import_to_google_doc": 3,
+      "mcp__google-workspace__insert_doc_image": 1,
+      "mcp__google-workspace__read_sheet_values": 4,
+      "mcp__google-workspace__search_drive_files": 10,
+      "mcp__google-workspace__search_gmail_messages": 19,
+      "mcp__google-workspace__start_google_auth": 2
+    },
+    "interrupts": 0,
+    "override_rate": 25.15
+  },
+  "permissions": {
+    "bypass_by_hour": {
+      "0": 156,
+      "1": 26,
+      "2": 3,
+      "8": 36,
+      "9": 70,
+      "10": 92,
+      "11": 79,
+      "12": 184,
+      "13": 165,
+      "14": 99,
+      "15": 53,
+      "16": 60,
+      "17": 41,
+      "18": 100,
+      "19": 96,
+      "20": 97,
+      "21": 214,
+      "22": 209,
+      "23": 100
+    },
+    "bypass_by_project": {
+      "-Users-martinvanco": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 2
+      },
+      "4/ROC/CLOUD": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 7
+      },
+      "4/ROC/OZNAL": {
+        "bypass_pct": 53.33,
+        "bypass_prompts": 32,
+        "total_prompts": 60
+      },
+      "4/ROC/VD": {
+        "bypass_pct": 22.79,
+        "bypass_prompts": 31,
+        "total_prompts": 136
+      },
+      "CLOUD/project/frontend": {
+        "bypass_pct": 100.0,
+        "bypass_prompts": 10,
+        "total_prompts": 10
+      },
+      "FIIT/Diploma/monad": {
+        "bypass_pct": 57.04,
+        "bypass_prompts": 77,
+        "total_prompts": 135
+      },
+      "PagespeedBulk": {
+        "bypass_pct": 94.98,
+        "bypass_prompts": 208,
+        "total_prompts": 219
+      },
+      "ROC/TP/genboard": {
+        "bypass_pct": 84.44,
+        "bypass_prompts": 114,
+        "total_prompts": 135
+      },
+      "Vibe/claudnalytics/claudnalytics": {
+        "bypass_pct": 52.36,
+        "bypass_prompts": 111,
+        "total_prompts": 212
+      },
+      "Vibe/electree/wizard": {
+        "bypass_pct": 38.46,
+        "bypass_prompts": 30,
+        "total_prompts": 78
+      },
+      "Vibe/upfan/landing": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 36
+      },
+      "Vibenalytics/vibenalytics": {
+        "bypass_pct": 30.56,
+        "bypass_prompts": 88,
+        "total_prompts": 288
+      },
+      "Webgate/Levosphere/levosphere": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 8
+      },
+      "Webgate/Vibe": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 67
+      },
+      "Webgate/Vibe/claudnalytics": {
+        "bypass_pct": 44.41,
+        "bypass_prompts": 754,
+        "total_prompts": 1698
+      },
+      "Webgate/context/base": {
+        "bypass_pct": 34.13,
+        "bypass_prompts": 284,
+        "total_prompts": 832
+      },
+      "Webgate/gamename/live": {
+        "bypass_pct": 30.23,
+        "bypass_prompts": 13,
+        "total_prompts": 43
+      },
+      "Webgate/lunter": {
+        "bypass_pct": 14.81,
+        "bypass_prompts": 12,
+        "total_prompts": 81
+      },
+      "Webgate/socksfor1/com": {
+        "bypass_pct": 100.0,
+        "bypass_prompts": 42,
+        "total_prompts": 42
+      },
+      "Wincent/wincent/careers": {
+        "bypass_pct": 32.67,
+        "bypass_prompts": 49,
+        "total_prompts": 150
+      },
+      "claudnalytics/test/showcase": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 3
+      },
+      "hello/elementor/child": {
+        "bypass_pct": 0.0,
+        "bypass_prompts": 0,
+        "total_prompts": 11
+      },
+      "monad/mobile/app": {
+        "bypass_pct": 10.0,
+        "bypass_prompts": 15,
+        "total_prompts": 150
+      },
+      "vaslekar/blog/redirects": {
+        "bypass_pct": 100.0,
+        "bypass_prompts": 10,
+        "total_prompts": 10
+      }
+    },
+    "bypass_pct": 42.6,
+    "mode_counts": {
+      "acceptEdits": 1624,
+      "bypassPermissions": 1880,
+      "default": 884,
+      "plan": 6,
+      "unknown": 19
+    },
+    "prompt_total": 4413
+  },
+  "remote_access": {
+    "active_days": 13,
+    "hosts": {
+      "-t": 1,
+      "-vT": 3,
+      "2": 1,
+      "api.webgate.tech": 13,
+      "bitnami@108.131.254.148": 28,
+      "bitnami@52.208.186.140": 106,
+      "cloud@orb": 44,
+      "default@vibenalytics.orb.local": 1,
+      "genboard.sk": 78,
+      "hetzner-openclaw": 12,
+      "martinvanco@vibenalytics.orb.local": 1,
+      "openclaw@91.98.68.118": 1,
+      "root@91.98.68.118": 1,
+      "unknown": 16,
+      "veridas-prod": 1,
+      "veridas-staging": 392,
+      "vibenalytics": 84,
+      "vibenalytics.orb.local": 2,
+      "vibenalytics@orb": 37,
+      "webgate.codes": 33,
+      "webgate.tech": 27
+    },
+    "production_hits": 321,
+    "ssh_total": 882,
+    "unique_hosts": 21
+  },
+  "risky_commands": {
+    "category_counts": {
+      "curl post": 159,
+      "delete without where": 3,
+      "docker rm": 9,
+      "npx execution": 350,
+      "pipe to shell": 1,
+      "push to main": 31,
+      "rm -rf": 19,
+      "sudo": 301,
+      "write redirect": 160
+    },
+    "examples": [
+      {
+        "category": "npx execution",
+        "command": "docker compose exec backend npx prisma migrate dev -name add-model-pricing 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-02-28T14:00:37.458Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "docker compose exec backend npx prisma migrate dev -n add-model-pricing 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-02-28T14:00:43.194Z"
+      },
+      {
+        "category": "curl post",
+        "command": "TOKEN=$(curl -s http://127.0.0.1:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"qwe@qwe.sk\",\"password\":\"heslo123\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin)['data']['token'])\")\n\n# Test GET pricing (should be empty)\necho \"=== GET /api/pricing ===\"\ncurl -s http://127.0.0.1:3001/api/pricing -H \"Authorization: Bearer $TOKEN\" | python3 -m json.tool\n\n# Test LiteLLM sync\necho -e \"\\n=== POST /api/pricing/sync ===\"\ncurl -s -X POST http://127.0.0.1:3001/api/pricing/sync -H \"Authorization: Bearer $TOKEN\" | python3 -m json.tool",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "medium",
+        "timestamp": "2026-02-28T14:07:08.277Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "docker compose exec backend npx prisma generate 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-02-28T14:09:49.193Z"
+      },
+      {
+        "category": "curl post",
+        "command": "TOKEN=$(curl -s http://127.0.0.1:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"qwe@qwe.sk\",\"password\":\"heslo123\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin)['data']['token'])\")\n\n# Test GET pricing (should be empty)\necho \"=== GET /api/pricing ===\"\ncurl -s http://127.0.0.1:3001/api/pricing -H \"Authorization: Bearer $TOKEN\" | python3 -m json.tool\n\n# Test LiteLLM sync\necho -e \"\\n=== POST /api/pricing/sync ===\"\ncurl -s -X POST http://127.0.0.1:3001/api/pricing/sync -H \"Authorization: Bearer $TOKEN\" | python3 -m json.tool",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "medium",
+        "timestamp": "2026-02-28T14:10:12.298Z"
+      },
+      {
+        "category": "curl post",
+        "command": "TOKEN=$(curl -s http://127.0.0.1:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"qwe@qwe.sk\",\"password\":\"heslo123\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin)['data']['token'])\")\n\ncurl -s -m 60 -X POST http://127.0.0.1:3001/api/pricing/sync -H \"Authorization: Bearer $TOKEN\" 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "medium",
+        "timestamp": "2026-02-28T14:10:32.823Z"
+      },
+      {
+        "category": "curl post",
+        "command": "TOKEN=$(curl -s http://127.0.0.1:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"qwe@qwe.sk\",\"password\":\"heslo123\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin)['data']['token'])\")\n\ncurl -s -m 60 -X POST http://127.0.0.1:3001/api/pricing/sync -H \"Authorization: Bearer $TOKEN\" 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "medium",
+        "timestamp": "2026-02-28T15:18:26.596Z"
+      },
+      {
+        "category": "delete without where",
+        "command": "docker compose exec db psql -U vibenalytics -d vibenalytics -c \"DELETE FROM model_pricing;\"",
+        "permission_mode": "acceptEdits",
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "severity": "critical",
+        "timestamp": "2026-02-28T15:20:13.616Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "cd /Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend && npx tsc --noEmit 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Webgate/Vibe/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:49:03.811Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "cd /Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend && npx tsc --noEmit 2>&1 | grep -v pricing.service",
+        "permission_mode": "acceptEdits",
+        "project": "Webgate/Vibe/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:49:11.060Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "cd /Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend && npx tsc --noEmit 2>&1 | grep -v pricing.service",
+        "permission_mode": "acceptEdits",
+        "project": "Webgate/Vibe/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:50:34.725Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "which ccusage 2>/dev/null || npx ccusage --help 2>/dev/null | head -80 || echo \"ccusage not installed\"",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:30:14.715Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "which ccusage 2>/dev/null || (npx ccusage --help 2>&1 | head -80) || echo \"ccusage not installed\"",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:30:18.983Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage session --help 2>&1",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:36:17.963Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage session --json --since 20260228 --until 20260301 --mode calculate 2>/dev/null | head -200",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:40:59.317Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage session --json --since 20260225 --mode calculate 2>/dev/null | python3 -m json.tool 2>/dev/null | head -150",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:41:08.842Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage blocks --help 2>&1",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:41:31.489Z"
+      },
+      {
+        "category": "write redirect",
+        "command": "cat ~/.config/vibenalytics-dev/local-sync/9b6fc537-904_20260227_211541.json | python3 -m json.tool 2>/dev/null | head -100",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "medium",
+        "timestamp": "2026-03-01T17:42:14.999Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage session --json --since 20260226 --until 20260228 --mode calculate --breakdown 2>/dev/null | python3 -c \"\nimport json, sys\ndata = json.load(sys.stdin)\n# Show first session with subagent breakdown\nfor s in data.get('sessions', []):\n    if 'vibenalytics' in s.get('sessionId','').lower() or 'vibenalytics' in s.get('projectPath','').lower():\n        print(json.dumps(s, indent=2))\n        break\n\" 2>/dev/null",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:42:17.857Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage session --json --since 20260226 --until 20260228 --mode calculate 2>/dev/null | python3 -c \"\nimport json, sys\ndata = json.load(sys.stdin)\nfor s in data.get('sessions', []):\n    sid = s.get('sessionId','')\n    print(f'{sid}: in={s[\\\"inputTokens\\\"]} out={s[\\\"outputTokens\\\"]} cache_create={s[\\\"cacheCreationTokens\\\"]} cache_read={s[\\\"cacheReadTokens\\\"]} cost={s[\\\"totalCost\\\"]:.4f}')\n\" 2>/dev/null",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:42:29.233Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage daily --json --since 20260226 --until 20260228 --mode calculate --breakdown 2>/dev/null | python3 -m json.tool | head -80",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:42:38.724Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage daily --json --since 20260226 --until 20260228 --mode calculate 2>&1 | tail -50",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:42:48.722Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "npx ccusage daily --json --since 20260226 --until 20260228 --mode calculate 2>&1; echo \"EXIT: $?\"",
+        "permission_mode": "default",
+        "project": "Vibenalytics/vibenalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T17:42:59.583Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "cd /Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend && npx prisma migrate dev --name add-lines-added-removed 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Webgate/Vibe/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T19:15:50.146Z"
+      },
+      {
+        "category": "npx execution",
+        "command": "DATABASE_URL=\"postgresql://vibenalytics:vibenalytics_dev@localhost:5432/vibenalytics\" npx prisma migrate dev --name add-lines-added-removed 2>&1",
+        "permission_mode": "acceptEdits",
+        "project": "Webgate/Vibe/claudnalytics",
+        "severity": "low",
+        "timestamp": "2026-03-01T19:16:59.163Z"
+      }
+    ],
+    "severity_counts": {
+      "critical": 4,
+      "high": 351,
+      "low": 350,
+      "medium": 328
+    },
+    "total": 1033
+  },
+  "scores": {
+    "agents": 43,
+    "commands": 0,
+    "overall": 14,
+    "permissions": 39,
+    "remote": 0,
+    "secrets": 0
+  },
+  "secrets": {
+    "by_type": {
+      "anthropic_tokens": 96,
+      "bearer_tokens": 97,
+      "key_assignments": 155,
+      "mysql_urls": 2,
+      "postgres_urls": 103,
+      "secret_assignments": 169
+    },
+    "env_paths": [
+      "/Users/martinvanco/Documents/FIIT/4_ROC/CLOUD/project/frontend/.env",
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/.env.example",
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/backend/monad-backend/.env",
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/backend/monad-backend/.env.dev",
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/.env",
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/.env.example",
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/.env",
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend/.env",
+      "/Users/martinvanco/Documents/Webgate/Vibe/electree-wizard/daktela/.env",
+      "/Users/martinvanco/Documents/Webgate/Wincent/wincent-careers/.env",
+      "/Users/martinvanco/Documents/Webgate/Wincent/wincent-careers/.env.example",
+      "/Users/martinvanco/Documents/Webgate/gamename.live/.env",
+      "/Users/martinvanco/Documents/Webgate/gamename.live/.env.example",
+      "/Users/martinvanco/Documents/Webgate/lighthouse-monitor/.env"
+    ],
+    "env_writes": 34,
+    "project_totals": {
+      "-Users-martinvanco": 0,
+      "4/ROC/CLOUD": 0,
+      "4/ROC/OZNAL": 0,
+      "4/ROC/VD": 1,
+      "CLOUD/project/frontend": 0,
+      "FIIT/Diploma/monad": 25,
+      "PagespeedBulk": 93,
+      "ROC/TP/genboard": 20,
+      "Vibe/claudnalytics/claudnalytics": 20,
+      "Vibe/electree/wizard": 4,
+      "Vibe/upfan/landing": 0,
+      "Vibenalytics/vibenalytics": 6,
+      "Webgate/Levosphere/levosphere": 0,
+      "Webgate/Vibe": 1,
+      "Webgate/Vibe/claudnalytics": 404,
+      "Webgate/context/base": 15,
+      "Webgate/gamename/live": 8,
+      "Webgate/lunter": 0,
+      "Webgate/socksfor1/com": 17,
+      "Wincent/wincent/careers": 0,
+      "claudnalytics/test/showcase": 0,
+      "hello/elementor/child": 0,
+      "monad/mobile/app": 8,
+      "vaslekar/blog/redirects": 0
+    },
+    "sensitive_read_paths": {
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/.env.example": 1,
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/backend/monad-backend/.env": 1,
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/backend/monad-backend/.env.dev": 1,
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/backend/monad-backend/docker-compose.prod.yml": 3,
+      "/Users/martinvanco/Documents/FIIT/Diploma/monad/docker-compose.yml": 1,
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/.env": 7,
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/.env.example": 6,
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/docker-compose.dev.yml": 4,
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/docker-compose.yaml": 2,
+      "/Users/martinvanco/Documents/PagespeedBulk/pagespeed-bulk/docker-compose.yml": 12,
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/.env": 7,
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/backend/.env": 2,
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/docker-compose.dev.yml": 10,
+      "/Users/martinvanco/Documents/Webgate/Vibe/claudnalytics/claudnalytics/docker-compose.yml": 13,
+      "/Users/martinvanco/Documents/Webgate/Vibe/electree-wizard/daktela/.env": 1,
+      "/Users/martinvanco/Documents/Webgate/Wincent/wincent-careers/.env": 1,
+      "/Users/martinvanco/Documents/Webgate/Wincent/wincent-careers/.env.example": 2,
+      "/Users/martinvanco/Documents/Webgate/Wincent/wincent-careers/docker-compose.yml": 1,
+      "/Users/martinvanco/Documents/Webgate/gamename.live/.env": 2,
+      "/Users/martinvanco/Documents/Webgate/gamename.live/.env.example": 2
+    },
+    "sensitive_reads": 82,
+    "total": 622
+  },
+  "source": {
+    "date_range": {
+      "end": "2026-03-30",
+      "start": null
+    },
+    "projects": 25,
+    "projects_dir": "/Users/martinvanco/.claude/projects",
+    "sessions": 251,
+    "transcript_files": 251
+  },
+  "stability": {
+    "api_errors": 427,
+    "compactions": 48
+  }
+}

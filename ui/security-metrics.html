@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111113">
+<title>Security Report - Vibenalytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  :root {
+    --obsidian: #111113;
+    --surface: #1a1a1e;
+    --elevated: #232328;
+    --border-subtle: #262630;
+    --border: #32323e;
+    --text: #ededf0;
+    --text-sec: #8e8e9a;
+    --text-muted: #55555f;
+    --accent: #cc8b65;
+    --red: #e05a4a;
+    --orange: #d99b78;
+    --green: #4eca8b;
+    --blue: #5b9fe0;
+    --purple: #9b7be0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--obsidian);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  .page { max-width:1200px; margin:0 auto; padding:48px 24px 96px; }
+  .hero-gauges { text-align:center; padding:40px 0 56px; }
+  .hero-tag, .hero-meta, .section-num, .mono, .badge, .score-legend-item, .footer {
+    font-family:'JetBrains Mono', monospace;
+  }
+  .hero-tag { display:inline-block; font-size:11px; color:var(--red); margin-bottom:16px; }
+  .hero-gauges h1 { font-size:28px; font-weight:700; line-height:1.15; margin-bottom:6px; }
+  .hero-meta { font-size:12px; color:var(--text-muted); margin-bottom:48px; }
+  .gauges-row { display:flex; align-items:flex-end; justify-content:center; gap:24px; margin-bottom:32px; flex-wrap:wrap; }
+  .score-legend { display:flex; justify-content:center; gap:24px; margin-top:20px; }
+  .score-legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); }
+  .score-legend-dot { width:8px; height:8px; border-radius:2px; }
+  .composite-note { font-size:13px; color:var(--text-sec); max-width:560px; margin:24px auto 0; line-height:1.65; }
+  .section { margin-bottom:56px; }
+  .section-header { display:flex; align-items:baseline; gap:12px; margin-bottom:8px; padding-bottom:10px; border-bottom:1px solid var(--border-subtle); }
+  .section-num { font-size:11px; font-weight:600; color:var(--text-muted); }
+  .section-title { font-size:14px; font-weight:600; }
+  .section-desc { font-size:14px; color:var(--text-sec); margin-bottom:20px; line-height:1.65; max-width:720px; }
+  .glass { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:24px; }
+  .chart-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .chart-subtitle { font-size:12px; color:var(--text-sec); margin-bottom:16px; line-height:1.5; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; max-width:1200px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border-subtle); border-radius:8px; padding:20px; }
+  .stat-num { font-family:'JetBrains Mono', monospace; font-size:28px; font-weight:600; line-height:1; margin-bottom:6px; }
+  .stat-label { font-size:12px; font-weight:600; color:var(--text-sec); margin-bottom:4px; }
+  .stat-detail { font-size:11px; color:var(--text-muted); line-height:1.4; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .data-table { width:100%; border-collapse:collapse; }
+  .data-table th { font-size:11px; color:var(--text-muted); font-weight:600; text-align:left; padding:6px 10px; border-bottom:1px solid var(--border); }
+  .data-table td { font-size:13px; color:var(--text-sec); padding:8px 10px; border-bottom:1px solid var(--border-subtle); }
+  .data-table td:first-child { color:var(--text); }
+  .badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:4px; white-space:nowrap; }
+  .badge-p0 { background:rgba(224,90,74,0.24); color:var(--red); }
+  .badge-p1 { background:rgba(204,139,101,0.24); color:var(--accent); }
+  .badge-p2 { background:rgba(91,159,224,0.18); color:var(--blue); }
+  .perm-legend { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:10px; }
+  .perm-legend-item { display:flex; align-items:flex-start; gap:8px; }
+  .perm-legend-dot { width:10px; height:10px; border-radius:999px; margin-top:4px; flex:0 0 auto; }
+  .perm-legend-label { font-size:12px; font-weight:600; color:var(--text); }
+  .perm-legend-meta { font-size:11px; color:var(--text-sec); line-height:1.4; }
+  .risk-item { display:flex; gap:12px; align-items:baseline; padding:12px 0; border-bottom:1px solid var(--border-subtle); }
+  .risk-item:last-child { border-bottom:none; }
+  .risk-item strong { color:var(--text); }
+  .risk-item p { font-size:13px; color:var(--text-sec); line-height:1.6; }
+  .d3-tip {
+    position:absolute; background:var(--elevated); border:1px solid var(--border); border-radius:8px;
+    padding:8px 12px; font-size:12px; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.15s;
+    z-index:100; font-family:'JetBrains Mono',monospace; max-width:260px;
+  }
+  .footer { text-align:center; margin-top:64px; padding-top:24px; border-top:1px solid var(--border-subtle); font-size:12px; color:var(--text-muted); }
+  .footer a { color:var(--accent); text-decoration:none; }
+  .loading, .error { max-width:900px; margin:80px auto; padding:24px; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
+  .error { color:var(--red); }
+  @media (max-width:768px) {
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .two-col { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page" id="app">
+  <div class="loading" id="loading">Loading security report...</div>
+</div>
+<div class="d3-tip" id="tip"></div>
+<script>
+const C = { red:'#e05a4a', accent:'#cc8b65', orange:'#d99b78', green:'#4eca8b', blue:'#5b9fe0', purple:'#9b7be0', text:'#ededf0', sec:'#8e8e9a', muted:'#55555f', elevated:'#232328' };
+const tip = d3.select('#tip');
+const showTip = (ev, html) => tip.html(html).style('opacity', 1).style('left', (ev.pageX + 14) + 'px').style('top', (ev.pageY - 20) + 'px');
+const hideTip = () => tip.style('opacity', 0);
+const scoreColor = s => s < 40 ? C.red : s < 70 ? C.orange : C.green;
+const params = new URLSearchParams(location.search);
+const dataUrl = params.get('data') || './report.json';
+
+function gauge(containerId, score, label, sublabel, size) {
+  const r = size * 0.38;
+  const stroke = size > 140 ? 10 : 7;
+  const color = scoreColor(score);
+  const svg = d3.select(containerId).html('').append('svg').attr('width', size).attr('height', size + 40);
+  const g = svg.append('g').attr('transform', `translate(${size/2}, ${size/2})`);
+  const bgArc = d3.arc().innerRadius(r - stroke/2).outerRadius(r + stroke/2).startAngle(-Math.PI * 0.75).endAngle(Math.PI * 0.75).cornerRadius(stroke);
+  g.append('path').attr('d', bgArc()).attr('fill', C.elevated);
+  const endAngle = -Math.PI * 0.75 + (Math.PI * 1.5 * score / 100);
+  const scoreArc = d3.arc().innerRadius(r - stroke/2).outerRadius(r + stroke/2).startAngle(-Math.PI * 0.75).cornerRadius(stroke);
+  const path = g.append('path').attr('fill', color).attr('opacity', 0.9);
+  path.transition().duration(1000).attrTween('d', () => {
+    const interp = d3.interpolate(-Math.PI * 0.75, endAngle);
+    return t => scoreArc.endAngle(interp(t))();
+  });
+  const txt = g.append('text').attr('text-anchor', 'middle').attr('y', size > 140 ? 6 : 4).attr('font-size', size > 140 ? 44 : 26).attr('fill', color).attr('font-family', "'JetBrains Mono', monospace").attr('font-weight', 700);
+  d3.select({v:0}).transition().duration(1000).tween('text', function() {
+    const i = d3.interpolateRound(0, score);
+    return t => txt.text(i(t));
+  });
+  svg.append('text').attr('x', size/2).attr('y', size + 8).attr('text-anchor', 'middle').attr('font-size', size > 140 ? 13 : 11).attr('font-weight', 600).attr('fill', C.sec).text(label);
+  svg.append('text').attr('x', size/2).attr('y', size + 24).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', C.muted).text(sublabel);
+}
+
+function hbar(id, data, left=120) {
+  const m = {top:4,right:44,bottom:4,left}, bh = 24, gap = 6, h = data.length * (bh + gap) + m.top + m.bottom, w = 500;
+  const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const x = d3.scaleLinear().domain([0, d3.max(data, d => d.v) || 1]).range([0, w - m.left - m.right]);
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+  data.forEach((d, i) => {
+    const y = i * (bh + gap);
+    g.append('rect').attr('x', 0).attr('y', y).attr('width', 0).attr('height', bh).attr('rx', 4).attr('fill', d.c).attr('opacity', 0.22)
+      .on('mouseover', ev => showTip(ev, `<div>${d.l}</div><div><strong>${d.v}</strong></div>`))
+      .on('mouseout', hideTip)
+      .transition().duration(700).delay(i * 50).attr('width', x(d.v));
+    g.append('text').attr('x', -8).attr('y', y + bh/2).attr('dy', '.35em').attr('text-anchor', 'end').attr('font-size', 11).attr('fill', C.sec).text(d.l);
+    g.append('text').attr('x', x(d.v) + 6).attr('y', y + bh/2).attr('dy', '.35em').attr('font-size', 11).attr('font-weight', 600).attr('fill', d.c).text(d.v);
+  });
+}
+
+function treemap(id, items) {
+  const w = 460, h = 180;
+  const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const root = d3.hierarchy({children:items}).sum(d => d.v);
+  d3.treemap().size([w,h]).padding(4).round(true)(root);
+  root.leaves().forEach(d => {
+    svg.append('rect')
+      .attr('x', d.x0).attr('y', d.y0).attr('width', d.x1 - d.x0).attr('height', d.y1 - d.y0)
+      .attr('rx', 6).attr('fill', d.data.c).attr('opacity', 0.18)
+      .on('mouseover', ev => showTip(ev, `<div>${d.data.n}</div><div><strong>${d.data.v}</strong></div>`))
+      .on('mouseout', hideTip);
+    if (d.x1 - d.x0 > 45) {
+      const cx = (d.x0 + d.x1) / 2, cy = (d.y0 + d.y1) / 2;
+      svg.append('text').attr('x', cx).attr('y', cy - 7).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', d.data.c).text(d.data.n);
+      svg.append('text').attr('x', cx).attr('y', cy + 12).attr('text-anchor', 'middle').attr('font-size', 18).attr('font-weight', 600).attr('fill', d.data.c).text(d.data.v);
+    }
+  });
+}
+
+function donut(id, data, total, centerText) {
+  const w = 280, h = 280;
+  const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const g = svg.append('g').attr('transform', `translate(${w/2},${w/2-10})`);
+  const pie = d3.pie().value(d => d.v).sort(null).padAngle(0.03);
+  const arc = d3.arc().innerRadius(78).outerRadius(108);
+  g.append('circle').attr('r', 93).attr('fill', 'none').attr('stroke', C.elevated).attr('stroke-width', 30);
+  g.selectAll('path').data(pie(data)).join('path').attr('d', arc).attr('fill', d => d.data.c).attr('opacity', 0.95)
+    .attr('stroke', '#1a1a1e').attr('stroke-width', 2)
+    .on('mouseover', (ev, d) => showTip(ev, `<div>${d.data.l}</div><div><strong>${d.data.v}</strong> (${((d.data.v/total)*100).toFixed(0)}%)</div>`))
+    .on('mouseout', hideTip);
+  g.append('text').attr('text-anchor', 'middle').attr('y', -6).attr('font-size', 26).attr('font-weight', 600).attr('fill', C.red).text(centerText);
+  g.append('text').attr('text-anchor', 'middle').attr('y', 16).attr('font-size', 10).attr('fill', C.sec).text('bypass share');
+}
+
+function hourBars(id, data) {
+  const items = data.slice().sort((a, b) => a.hour - b.hour);
+  const m = {top:10,right:12,bottom:28,left:30}, w = 520, h = 220;
+  const innerW = w - m.left - m.right, innerH = h - m.top - m.bottom;
+  const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+  const x = d3.scaleBand().domain(items.map(d => d.hour)).range([0, innerW]).padding(0.18);
+  const y = d3.scaleLinear().domain([0, d3.max(items, d => d.bypass_prompts) || 1]).nice().range([innerH, 0]);
+
+  g.append('g')
+    .attr('transform', `translate(0,${innerH})`)
+    .call(d3.axisBottom(x).tickValues(items.filter(d => d.hour % 3 === 0).map(d => d.hour)).tickFormat(d => String(d).padStart(2, '0')))
+    .call(g => g.selectAll('text').attr('fill', C.muted).attr('font-size', 10))
+    .call(g => g.selectAll('path,line').attr('stroke', '#2d2d34'));
+
+  g.append('g')
+    .call(d3.axisLeft(y).ticks(4))
+    .call(g => g.selectAll('text').attr('fill', C.muted).attr('font-size', 10))
+    .call(g => g.selectAll('path,line').attr('stroke', '#2d2d34'));
+
+  g.selectAll('rect.bar')
+    .data(items)
+    .join('rect')
+    .attr('class', 'bar')
+    .attr('x', d => x(d.hour))
+    .attr('y', innerH)
+    .attr('width', x.bandwidth())
+    .attr('height', 0)
+    .attr('rx', 3)
+    .attr('fill', C.red)
+    .attr('opacity', 0.85)
+    .on('mouseover', (ev, d) => showTip(ev, `<div>${String(d.hour).padStart(2,'0')}:00</div><div><strong>${d.bypass_prompts}</strong> bypass prompts</div>`))
+    .on('mouseout', hideTip)
+    .transition()
+    .duration(700)
+    .delay((_, i) => i * 20)
+    .attr('y', d => y(d.bypass_prompts))
+    .attr('height', d => innerH - y(d.bypass_prompts));
+}
+
+function statCard(num, label, detail, color='var(--text)') {
+  return `<div class="stat-card"><div class="stat-num" style="color:${color}">${num}</div><div class="stat-label">${label}</div><div class="stat-detail">${detail}</div></div>`;
+}
+
+function riskBadge(priority) {
+  return priority === 'P0' ? 'badge-p0' : priority === 'P1' ? 'badge-p1' : 'badge-p2';
+}
+
+function arr(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function render(data) {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+  <div class="hero-gauges">
+    <div class="hero-tag">Security Audit</div>
+    <h1>Claude Code <span>Security</span> Report</h1>
+    <div class="hero-meta">${data.hero.transcript_count} transcripts &middot; ${data.hero.project_count} projects &middot; ${Math.round(data.hero.total_entries/1000)}k entries &middot; ${data.hero.date_range.start || 'unknown'} to ${data.hero.date_range.end || 'unknown'}</div>
+    <div class="gauges-row">
+      <div id="gauge-secrets"></div>
+      <div id="gauge-remote"></div>
+      <div id="gauge-overall"></div>
+      <div id="gauge-permissions"></div>
+      <div id="gauge-commands"></div>
+    </div>
+    <div class="score-legend">
+      <div class="score-legend-item"><div class="score-legend-dot" style="background:var(--red)"></div>0-39 fail</div>
+      <div class="score-legend-item"><div class="score-legend-dot" style="background:var(--orange)"></div>40-69 needs work</div>
+      <div class="score-legend-item"><div class="score-legend-dot" style="background:var(--green)"></div>70-100 good</div>
+    </div>
+    <div class="composite-note">Overall score weights: Secrets ${data.scores.weights.secrets}% &middot; Permissions ${data.scores.weights.permissions}% &middot; Remote Access ${data.scores.weights.remote_access}% &middot; Commands ${data.scores.weights.commands}% &middot; Agent Oversight ${data.scores.weights.agent_oversight}%</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">01</span><span class="section-title" style="color:var(--red)">Secret Exposure</span></div>
+    <div class="section-desc">Credentials that entered Claude's context window from file reads, pasted tokens, or command output.</div>
+    <div class="stat-grid" id="secret-stats"></div>
+    <div class="two-col">
+      <div class="glass"><div class="chart-title">Secret Types</div><div class="chart-subtitle">Breakdown of credential types found in context.</div><div id="chart-secret-types"></div></div>
+      <div class="glass"><div class="chart-title">Most Exposed</div><div class="chart-subtitle">Secrets appearing most frequently.</div><table class="data-table"><thead><tr><th>Secret</th><th>Hits</th><th>Projects</th></tr></thead><tbody id="tbl-most-exposed"></tbody></table></div>
+    </div>
+    <div class="glass" style="margin-top:16px"><div class="chart-title">Exposure by Project</div><div class="chart-subtitle">Which projects leak the most secrets into transcripts.</div><div id="chart-project-exposure"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">02</span><span class="section-title" style="color:var(--red)">SSH &amp; Remote Access</span></div>
+    <div class="section-desc">SSH usage observed in transcripts, including direct remote commands and interactive or non-command SSH sessions.</div>
+    <div class="stat-grid" id="ssh-stats"></div>
+    <div class="two-col">
+      <div class="glass"><div class="chart-title">Hosts Accessed</div><div class="chart-subtitle">Commands per server.</div><div id="chart-ssh-hosts"></div></div>
+      <div class="glass"><div class="chart-title">Timeline</div><div class="chart-subtitle">Remote command activity by day.</div><table class="data-table"><thead><tr><th>Date</th><th>Cmds</th><th>Host</th><th>Activity</th></tr></thead><tbody id="tbl-ssh-timeline"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">03</span><span class="section-title" style="color:var(--accent)">Destructive Commands</span></div>
+    <div class="section-desc">${data.destructive_commands.total_flagged} flagged Bash commands across 4 severity levels.</div>
+    <div class="stat-grid" id="cmd-stats"></div>
+    <div class="two-col">
+      <div class="glass"><div class="chart-title">Severity Distribution</div><div class="chart-subtitle">Visual weight of each risk level.</div><div id="chart-severity"></div></div>
+      <div class="glass"><div class="chart-title">By Category</div><div class="chart-subtitle">What kinds of risky operations.</div><div id="chart-categories"></div></div>
+    </div>
+    <div class="two-col" style="margin-top:16px">
+      <div class="glass"><div class="chart-title" style="color:var(--red)">Critical Findings</div><table class="data-table"><thead><tr><th>Type</th><th>Count</th><th>Risk</th></tr></thead><tbody id="tbl-findings"></tbody></table></div>
+      <div class="glass"><div class="chart-title" style="color:var(--green)">Git Safety</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px" id="git-safety"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">04</span><span class="section-title" style="color:var(--accent)">Permission Discipline</span></div>
+    <div class="section-desc">${data.permission_discipline.bypass_pct}% of all work runs in bypassPermissions.</div>
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="glass" style="text-align:center"><div class="chart-title">Mode Distribution</div><div class="chart-subtitle">${data.permission_discipline.prompt_total} prompts across all modes.</div><div id="chart-perm-donut" style="max-width:280px;margin:0 auto"></div><div id="perm-legend" class="perm-legend"></div></div>
+      <div class="glass"><div class="chart-title">Bypass by Hour</div><div class="chart-subtitle">Hourly distribution of bypass-mode prompts.</div><div id="chart-bypass-heat"></div></div>
+    </div>
+    <div class="glass"><div class="chart-title" style="color:var(--red)">Highest Bypass Projects</div><table class="data-table"><thead><tr><th>Project</th><th>Bypass Rate</th><th>Prompts</th><th>Risk</th></tr></thead><tbody id="tbl-project-risk"></tbody></table></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">05</span><span class="section-title" style="color:var(--purple)">Autonomous Agents</span></div>
+    <div class="section-desc">Subagents inherit parent permissions and run without human review.</div>
+    <div class="stat-grid" id="agent-stats"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">06</span><span class="section-title" style="color:var(--green)">Human Overrides</span></div>
+    <div class="section-desc">The safety net: times the developer actively stopped Claude via rejections or Escape key.</div>
+    <div class="stat-grid" id="override-stats"></div>
+    <div class="glass"><div class="chart-title">Most Rejected Tools</div><div class="chart-subtitle">Which tool classes the user blocks most often.</div><div id="chart-rejected"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">07</span><span class="section-title" style="color:var(--red)">Prioritized Risks</span></div>
+    <div class="glass" style="margin-bottom:16px" id="risk-items"></div>
+    <div class="glass"><div class="chart-title">What's Working Well</div><div style="font-size:13px;color:var(--text-sec);line-height:2;margin-top:8px" id="working-well"></div></div>
+  </div>
+  <div class="footer"><a href="https://vibenalytics.com">vibenalytics.com</a></div>
+  `;
+
+  gauge('#gauge-secrets', data.scores.secrets, 'Secrets', `${data.secret_exposure.total_secrets} exposed`, 120);
+  gauge('#gauge-remote', data.scores.remote_access, 'Remote Access', `${data.ssh_remote_access.ssh_commands} ssh cmds`, 120);
+  gauge('#gauge-overall', data.scores.overall, 'Overall', 'Security Score', 180);
+  gauge('#gauge-permissions', data.scores.permissions, 'Permissions', `${Math.round(data.permission_discipline.bypass_pct)}% bypass`, 120);
+  gauge('#gauge-commands', data.scores.commands, 'Commands', `${data.destructive_commands.critical} critical`, 120);
+
+  document.getElementById('secret-stats').innerHTML = [
+    statCard(data.secret_exposure.total_secrets, 'Total Secrets', 'Credential values in transcripts', 'var(--red)'),
+    statCard(data.secret_exposure.sensitive_reads, 'Sensitive Reads', 'Claude read secret-containing files', 'var(--red)'),
+    statCard(data.secret_exposure.env_writes, '.env Writes', 'Edits to environment files', 'var(--accent)'),
+    statCard(data.secret_exposure.env_paths, '.env Paths', 'Unique environment files accessed', 'var(--blue)')
+  ].join('');
+
+  document.getElementById('ssh-stats').innerHTML = [
+    statCard(data.ssh_remote_access.ssh_commands, 'SSH Commands', 'Remote executions total', 'var(--red)'),
+    statCard(data.ssh_remote_access.remote_command_ssh, 'Remote Command SSH', 'ssh host "cmd" style activity', 'var(--red)'),
+    statCard(data.ssh_remote_access.unique_hosts, 'Unique Hosts', 'Distinct servers', 'var(--blue)'),
+    statCard(data.ssh_remote_access.interactive_ssh, 'Interactive SSH', 'Bare ssh or non-command sessions', 'var(--blue)')
+  ].join('');
+
+  document.getElementById('cmd-stats').innerHTML = [
+    statCard(data.destructive_commands.critical, 'Critical', 'DELETE without WHERE, curl|sh', 'var(--red)'),
+    statCard(data.destructive_commands.high, 'High', 'push main, rm -rf, DB reset', 'var(--accent)'),
+    statCard(data.destructive_commands.medium, 'Medium', 'curl POST, docker rm', 'var(--blue)'),
+    statCard(data.destructive_commands.low, 'Low', 'npx executions', 'var(--text-muted)')
+  ].join('');
+
+  document.getElementById('agent-stats').innerHTML = [
+    statCard(data.autonomous_agents.agents_spawned, 'Agents Spawned', 'Total autonomous agents', 'var(--purple)'),
+    statCard(data.autonomous_agents.in_bypass_mode, 'In Bypass Mode', 'Zero permission checks', 'var(--red)'),
+    statCard(data.autonomous_agents.from_top_project.count, `From ${data.autonomous_agents.from_top_project.project}`, 'Top project source', 'var(--accent)'),
+    statCard(data.autonomous_agents.rejections, 'Rejections', 'User blocked spawning', 'var(--green)')
+  ].join('');
+
+  document.getElementById('override-stats').innerHTML = [
+    statCard(data.human_overrides.denials, 'Denials', 'Tool rejections', 'var(--green)'),
+    statCard(data.human_overrides.interrupts, 'Interrupts', 'Escape mid-response', 'var(--green)'),
+    statCard(data.human_overrides.destructive_catches, 'Destructive Catches', 'During dangerous ops', 'var(--green)'),
+    statCard(`${Math.round(data.human_overrides.override_rate)}%`, 'Override Rate', 'Denials + interrupts over prompts', 'var(--blue)')
+  ].join('');
+
+  hbar('#chart-secret-types', arr(data.secret_exposure.secret_types).map(d => ({l:d.label, v:d.count, c:d.label.includes('SECRET') || d.label.includes('KEY') ? C.red : C.accent})), 120);
+  hbar('#chart-ssh-hosts', arr(data.ssh_remote_access.hosts_accessed).map((d, i) => ({l:d.label, v:d.count, c:i < 2 ? C.red : C.accent})), 140);
+  hbar('#chart-categories', arr(data.destructive_commands.by_category).map((d, i) => ({l:d.label, v:d.count, c:i === 0 ? C.blue : i < 3 ? C.accent : C.red})), 120);
+  hbar('#chart-rejected', arr(data.human_overrides.most_rejected_tools).map((d, i) => ({l:d.label, v:d.count, c:i === 0 ? C.green : i === 1 ? C.green : C.blue})), 110);
+  treemap('#chart-severity', [
+    {n:'Low', v:data.destructive_commands.low, c:C.muted},
+    {n:'Medium', v:data.destructive_commands.medium, c:C.blue},
+    {n:'High', v:data.destructive_commands.high, c:C.accent},
+    {n:'Critical', v:data.destructive_commands.critical, c:C.red}
+  ]);
+  donut('#chart-perm-donut', arr(data.permission_discipline.mode_distribution).map((d, i) => ({l:d.label, v:d.count, c:[C.red, C.accent, C.green, C.purple][i % 4]})), data.permission_discipline.prompt_total, `${Math.round(data.permission_discipline.bypass_pct)}%`);
+  hourBars('#chart-bypass-heat', arr(data.permission_discipline.bypass_by_hour));
+  document.getElementById('perm-legend').innerHTML = arr(data.permission_discipline.mode_distribution).map((d, i) => {
+    const color = [C.red, C.accent, C.green, C.purple][i % 4];
+    const pct = data.permission_discipline.prompt_total ? Math.round((d.count / data.permission_discipline.prompt_total) * 100) : 0;
+    return `<div class="perm-legend-item"><span class="perm-legend-dot" style="background:${color}"></span><div><div class="perm-legend-label">${d.label}</div><div class="perm-legend-meta">${d.count} prompts · ${pct}%</div></div></div>`;
+  }).join('');
+
+  document.getElementById('tbl-most-exposed').innerHTML = arr(data.secret_exposure.most_exposed).map(r => `<tr><td>${r.secret}</td><td class="mono">${r.hits}</td><td class="mono">${r.projects}</td></tr>`).join('');
+  document.getElementById('tbl-ssh-timeline').innerHTML = arr(data.ssh_remote_access.timeline).map(r => `<tr><td class="mono">${r.date}</td><td class="mono">${r.commands}</td><td class="mono">${r.top_host}</td><td>${r.activity_summary}</td></tr>`).join('');
+  document.getElementById('tbl-findings').innerHTML = arr(data.destructive_commands.critical_findings).map(r => `<tr><td>${r.kind}</td><td class="mono">${r.count}</td><td><span class="badge ${r.risk === 'CRITICAL' ? 'badge-p0' : 'badge-p1'}">${r.risk}</span></td></tr>`).join('');
+  document.getElementById('tbl-project-risk').innerHTML = arr(data.permission_discipline.highest_bypass_projects).map(r => `<tr><td class="mono">${r.project}</td><td class="mono">${r.bypass_pct}%</td><td class="mono">${r.prompts}</td><td><span class="badge ${r.risk === 'CRITICAL' ? 'badge-p0' : r.risk === 'HIGH' ? 'badge-p1' : 'badge-p2'}">${r.risk}</span></td></tr>`).join('');
+  document.getElementById('risk-items').innerHTML = arr(data.prioritized_risks.items).map(r => `<div class="risk-item"><span class="badge ${riskBadge(r.priority)}">${r.priority}</span><p><strong>${r.title}</strong> - ${r.description}</p></div>`).join('');
+  document.getElementById('working-well').innerHTML = arr(data.prioritized_risks.whats_working_well).map(t => `<div>${t}</div>`).join('');
+
+  const git = data.destructive_commands.git_safety;
+  document.getElementById('git-safety').innerHTML = [
+    ['Push to main', git.push_to_main, 'var(--accent)'],
+    ['Force push', git.force_push, 'var(--green)'],
+    ['reset --hard', git.reset_hard, 'var(--green)'],
+    ['--no-verify', git.no_verify, 'var(--green)']
+  ].map(([label, value, color]) => `<div style="background:var(--elevated);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${color}">${value}</div><div style="font-size:11px;color:var(--text-sec);margin-top:4px">${label}</div></div>`).join('');
+
+  const projData = arr(data.secret_exposure.exposure_by_project).slice(0, 8);
+  (function(){
+    const m = {top:8,right:20,bottom:28,left:160}, bh = 26, gap = 8, h = projData.length * (bh + gap) + m.top + m.bottom, w = 700;
+    const svg = d3.select('#chart-project-exposure').html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+    const x = d3.scaleLinear().domain([0, d3.max(projData, d => d.total) || 1]).range([0, w - m.left - m.right]);
+    const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+    projData.forEach((d, i) => {
+      const y = i * (bh + gap);
+      const parts = [
+        {k:'reads', v:d.reads, c:C.blue, l:'Reads'},
+        {k:'secrets', v:d.secrets, c:C.red, l:'Secrets'},
+        {k:'writes', v:d.writes, c:C.accent, l:'Writes'}
+      ];
+      let cx = 0;
+      parts.forEach(p => {
+        g.append('rect').attr('x', cx).attr('y', y).attr('width', x(p.v)).attr('height', bh).attr('fill', p.c).attr('opacity', 0.3)
+          .on('mouseover', ev => showTip(ev, `<div>${d.project} / ${p.l}</div><div><strong>${p.v}</strong></div>`))
+          .on('mouseout', hideTip);
+        cx += x(p.v);
+      });
+      g.append('text').attr('x', -8).attr('y', y + bh/2).attr('dy', '.35em').attr('text-anchor', 'end').attr('font-size', 11).attr('fill', C.sec).text(d.project);
+    });
+  })();
+}
+
+fetch(dataUrl)
+  .then(r => { if (!r.ok) throw new Error(`Failed to load ${dataUrl}: ${r.status}`); return r.json(); })
+  .then(render)
+  .catch(err => {
+    document.getElementById('app').innerHTML = `<div class="error">Failed to load report JSON.<br><br>${err.message}</div>`;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,649 @@
+{
+  "hero": {
+    "report_title": "Claude Code Security Report",
+    "transcript_count": 1898,
+    "project_count": 70,
+    "total_entries": 340047,
+    "date_range": {
+      "start": "2026-01-12",
+      "end": "2026-03-30"
+    },
+    "include_subagents": true
+  },
+  "scores": {
+    "overall": 31,
+    "secrets": 0,
+    "remote_access": 65,
+    "permissions": 29,
+    "commands": 46,
+    "agent_oversight": 34,
+    "weights": {
+      "secrets": 30,
+      "permissions": 25,
+      "remote_access": 20,
+      "commands": 15,
+      "agent_oversight": 10
+    }
+  },
+  "secret_exposure": {
+    "total_secrets": 1027,
+    "sensitive_reads": 213,
+    "env_writes": 56,
+    "env_paths": 26,
+    "secret_types": [
+      {
+        "label": "KEY= values",
+        "count": 286
+      },
+      {
+        "label": "SECRET= values",
+        "count": 282
+      },
+      {
+        "label": "Postgres URLs",
+        "count": 185
+      },
+      {
+        "label": "Bearer tokens",
+        "count": 132
+      },
+      {
+        "label": "Anthropic OAuth",
+        "count": 129
+      },
+      {
+        "label": "MySQL URLs",
+        "count": 13
+      }
+    ],
+    "most_exposed": [
+      {
+        "secret": "sk-ant-*",
+        "hits": 129,
+        "projects": 5
+      },
+      {
+        "secret": "RESEND_API_KEY",
+        "hits": 96,
+        "projects": 6
+      },
+      {
+        "secret": "JWT_SECRET",
+        "hits": 88,
+        "projects": 4
+      },
+      {
+        "secret": "GOOGLE_CLIENT_SECRET",
+        "hits": 72,
+        "projects": 4
+      },
+      {
+        "secret": "ENCRYPTION_KEY",
+        "hits": 58,
+        "projects": 4
+      },
+      {
+        "secret": "GH_OAUTH_CLIENT_SECRET",
+        "hits": 38,
+        "projects": 3
+      },
+      {
+        "secret": "JWT_SECRET_KEY",
+        "hits": 28,
+        "projects": 3
+      },
+      {
+        "secret": "APP_SECRET",
+        "hits": 26,
+        "projects": 3
+      },
+      {
+        "secret": "API_KEY",
+        "hits": 25,
+        "projects": 2
+      },
+      {
+        "secret": "RECAPTCHA_SECRET_KEY",
+        "hits": 18,
+        "projects": 2
+      }
+    ],
+    "exposure_by_project": [
+      {
+        "project": "Webgate/Vibe/claudnalytics",
+        "reads": 72,
+        "secrets": 533,
+        "writes": 3,
+        "total": 608
+      },
+      {
+        "project": "PagespeedBulk",
+        "reads": 68,
+        "secrets": 172,
+        "writes": 45,
+        "total": 285
+      },
+      {
+        "project": "FIIT/Diploma/monad",
+        "reads": 21,
+        "secrets": 88,
+        "writes": 0,
+        "total": 109
+      },
+      {
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "reads": 13,
+        "secrets": 56,
+        "writes": 0,
+        "total": 69
+      },
+      {
+        "project": "ROC/TP/genboard",
+        "reads": 4,
+        "secrets": 52,
+        "writes": 0,
+        "total": 56
+      },
+      {
+        "project": "Webgate/socksfor1/com",
+        "reads": 4,
+        "secrets": 30,
+        "writes": 3,
+        "total": 37
+      },
+      {
+        "project": "Webgate/context/base",
+        "reads": 7,
+        "secrets": 24,
+        "writes": 2,
+        "total": 33
+      },
+      {
+        "project": "Webgate/gamename/live",
+        "reads": 4,
+        "secrets": 21,
+        "writes": 1,
+        "total": 26
+      },
+      {
+        "project": "Vibenalytics/vibenalytics",
+        "reads": 0,
+        "secrets": 12,
+        "writes": 0,
+        "total": 12
+      },
+      {
+        "project": "bytyfi/late/publishing",
+        "reads": 1,
+        "secrets": 11,
+        "writes": 0,
+        "total": 12
+      }
+    ]
+  },
+  "ssh_remote_access": {
+    "ssh_commands": 799,
+    "unique_hosts": 20,
+    "active_days": 12,
+    "remote_command_ssh": 740,
+    "interactive_ssh": 59,
+    "hosts_accessed": [
+      {
+        "label": "veridas-staging",
+        "count": 339
+      },
+      {
+        "label": "bitnami@52.208.186.140",
+        "count": 94
+      },
+      {
+        "label": "vibenalytics",
+        "count": 81
+      },
+      {
+        "label": "genboard.sk",
+        "count": 78
+      },
+      {
+        "label": "cloud@orb",
+        "count": 44
+      },
+      {
+        "label": "vibenalytics@orb",
+        "count": 37
+      },
+      {
+        "label": "webgate.codes",
+        "count": 33
+      },
+      {
+        "label": "webgate.tech",
+        "count": 27
+      },
+      {
+        "label": "bitnami@108.131.254.148",
+        "count": 26
+      },
+      {
+        "label": "api.webgate.tech",
+        "count": 13
+      }
+    ],
+    "timeline": [
+      {
+        "date": "2026-03-11",
+        "commands": 16,
+        "top_host": "vibenalytics",
+        "activity_summary": "Docker / psql / JWT"
+      },
+      {
+        "date": "2026-03-12",
+        "commands": 99,
+        "top_host": "webgate.codes",
+        "activity_summary": "WordPress / WP-CLI"
+      },
+      {
+        "date": "2026-03-13",
+        "commands": 83,
+        "top_host": "veridas-staging",
+        "activity_summary": "WordPress / WP-CLI"
+      },
+      {
+        "date": "2026-03-16",
+        "commands": 197,
+        "top_host": "veridas-staging",
+        "activity_summary": "Interactive / non-command SSH"
+      },
+      {
+        "date": "2026-03-18",
+        "commands": 76,
+        "top_host": "cloud@orb",
+        "activity_summary": "Remote execution"
+      },
+      {
+        "date": "2026-03-23",
+        "commands": 143,
+        "top_host": "veridas-staging",
+        "activity_summary": "Remote execution"
+      },
+      {
+        "date": "2026-03-24",
+        "commands": 34,
+        "top_host": "vibenalytics",
+        "activity_summary": "Docker / psql / JWT"
+      },
+      {
+        "date": "2026-03-25",
+        "commands": 37,
+        "top_host": "vibenalytics@orb",
+        "activity_summary": "Rust build / deploy"
+      },
+      {
+        "date": "2026-03-26",
+        "commands": 78,
+        "top_host": "genboard.sk",
+        "activity_summary": "Uptime / DB activity"
+      },
+      {
+        "date": "2026-03-28",
+        "commands": 21,
+        "top_host": "api.webgate.tech",
+        "activity_summary": "Remote execution"
+      }
+    ]
+  },
+  "destructive_commands": {
+    "total_flagged": 869,
+    "critical": 6,
+    "high": 371,
+    "medium": 10,
+    "low": 482,
+    "severity_distribution": [
+      {
+        "label": "low",
+        "count": 482
+      },
+      {
+        "label": "high",
+        "count": 371
+      },
+      {
+        "label": "medium",
+        "count": 10
+      },
+      {
+        "label": "critical",
+        "count": 6
+      }
+    ],
+    "by_category": [
+      {
+        "label": "npx execution",
+        "count": 482
+      },
+      {
+        "label": "sudo",
+        "count": 302
+      },
+      {
+        "label": "push to main",
+        "count": 36
+      },
+      {
+        "label": "rm -rf",
+        "count": 33
+      },
+      {
+        "label": "docker rm",
+        "count": 10
+      },
+      {
+        "label": "delete without where",
+        "count": 5
+      },
+      {
+        "label": "pipe to shell",
+        "count": 1
+      }
+    ],
+    "critical_findings": [
+      {
+        "kind": "sudo",
+        "count": 302,
+        "risk": "HIGH"
+      },
+      {
+        "kind": "push to main",
+        "count": 36,
+        "risk": "HIGH"
+      },
+      {
+        "kind": "rm -rf",
+        "count": 33,
+        "risk": "HIGH"
+      },
+      {
+        "kind": "delete without where",
+        "count": 5,
+        "risk": "CRITICAL"
+      },
+      {
+        "kind": "pipe to shell",
+        "count": 1,
+        "risk": "CRITICAL"
+      }
+    ],
+    "git_safety": {
+      "push_to_main": 36,
+      "force_push": 3,
+      "reset_hard": 2,
+      "no_verify": 0
+    }
+  },
+  "permission_discipline": {
+    "prompt_total": 3773,
+    "bypass_pct": 41.29,
+    "mode_distribution": [
+      {
+        "label": "bypassPermissions",
+        "count": 1558
+      },
+      {
+        "label": "acceptEdits",
+        "count": 1456
+      },
+      {
+        "label": "default",
+        "count": 753
+      },
+      {
+        "label": "plan",
+        "count": 6
+      }
+    ],
+    "bypass_by_hour": [
+      {
+        "hour": 0,
+        "bypass_prompts": 126
+      },
+      {
+        "hour": 1,
+        "bypass_prompts": 20
+      },
+      {
+        "hour": 2,
+        "bypass_prompts": 3
+      },
+      {
+        "hour": 8,
+        "bypass_prompts": 30
+      },
+      {
+        "hour": 9,
+        "bypass_prompts": 67
+      },
+      {
+        "hour": 10,
+        "bypass_prompts": 79
+      },
+      {
+        "hour": 11,
+        "bypass_prompts": 66
+      },
+      {
+        "hour": 12,
+        "bypass_prompts": 153
+      },
+      {
+        "hour": 13,
+        "bypass_prompts": 139
+      },
+      {
+        "hour": 14,
+        "bypass_prompts": 84
+      },
+      {
+        "hour": 15,
+        "bypass_prompts": 42
+      },
+      {
+        "hour": 16,
+        "bypass_prompts": 59
+      },
+      {
+        "hour": 17,
+        "bypass_prompts": 31
+      },
+      {
+        "hour": 18,
+        "bypass_prompts": 95
+      },
+      {
+        "hour": 19,
+        "bypass_prompts": 73
+      },
+      {
+        "hour": 20,
+        "bypass_prompts": 83
+      },
+      {
+        "hour": 21,
+        "bypass_prompts": 179
+      },
+      {
+        "hour": 22,
+        "bypass_prompts": 130
+      },
+      {
+        "hour": 23,
+        "bypass_prompts": 99
+      }
+    ],
+    "highest_bypass_projects": [
+      {
+        "project": "Webgate/socksfor1/com",
+        "prompts": 35,
+        "bypass_prompts": 35,
+        "bypass_pct": 100.0,
+        "risk": "CRITICAL"
+      },
+      {
+        "project": "CLOUD/project/frontend",
+        "prompts": 10,
+        "bypass_prompts": 10,
+        "bypass_pct": 100.0,
+        "risk": "CRITICAL"
+      },
+      {
+        "project": "vaslekar/blog/redirects",
+        "prompts": 7,
+        "bypass_prompts": 7,
+        "bypass_pct": 100.0,
+        "risk": "CRITICAL"
+      },
+      {
+        "project": "PagespeedBulk",
+        "prompts": 189,
+        "bypass_prompts": 184,
+        "bypass_pct": 97.35,
+        "risk": "CRITICAL"
+      },
+      {
+        "project": "ROC/TP/genboard",
+        "prompts": 111,
+        "bypass_prompts": 95,
+        "bypass_pct": 85.59,
+        "risk": "HIGH"
+      },
+      {
+        "project": "FIIT/Diploma/monad",
+        "prompts": 127,
+        "bypass_prompts": 71,
+        "bypass_pct": 55.91,
+        "risk": "HIGH"
+      },
+      {
+        "project": "Vibe/claudnalytics/claudnalytics",
+        "prompts": 192,
+        "bypass_prompts": 103,
+        "bypass_pct": 53.65,
+        "risk": "HIGH"
+      },
+      {
+        "project": "4/ROC/OZNAL",
+        "prompts": 57,
+        "bypass_prompts": 29,
+        "bypass_pct": 50.88,
+        "risk": "HIGH"
+      },
+      {
+        "project": "Vibe/electree/wizard",
+        "prompts": 64,
+        "bypass_prompts": 27,
+        "bypass_pct": 42.19,
+        "risk": "MEDIUM"
+      },
+      {
+        "project": "Webgate/Vibe/claudnalytics",
+        "prompts": 1443,
+        "bypass_prompts": 599,
+        "bypass_pct": 41.51,
+        "risk": "MEDIUM"
+      }
+    ]
+  },
+  "autonomous_agents": {
+    "agents_spawned": 755,
+    "in_bypass_mode": 458,
+    "from_top_project": {
+      "project": "Webgate/Vibe/claudnalytics",
+      "count": 405
+    },
+    "rejections": 28
+  },
+  "human_overrides": {
+    "denials": 287,
+    "interrupts": 10,
+    "destructive_catches": 0,
+    "override_rate": 7.87,
+    "most_rejected_tools": [
+      {
+        "label": "Bash",
+        "count": 158
+      },
+      {
+        "label": "Agent",
+        "count": 28
+      },
+      {
+        "label": "Read",
+        "count": 28
+      },
+      {
+        "label": "ExitPlanMode",
+        "count": 15
+      },
+      {
+        "label": "Edit",
+        "count": 14
+      },
+      {
+        "label": "WebFetch",
+        "count": 9
+      },
+      {
+        "label": "TaskOutput",
+        "count": 6
+      },
+      {
+        "label": "Write",
+        "count": 6
+      },
+      {
+        "label": "AskUserQuestion",
+        "count": 4
+      },
+      {
+        "label": "Glob",
+        "count": 4
+      }
+    ]
+  },
+  "prioritized_risks": {
+    "items": [
+      {
+        "priority": "P0",
+        "title": "Secret-like exposure",
+        "description": "1027 secret-like values or credentials were exposed in transcript context."
+      },
+      {
+        "priority": "P0",
+        "title": "Bypass-mode agents",
+        "description": "458 spawned agents ran under bypassPermissions."
+      },
+      {
+        "priority": "P1",
+        "title": "SSH activity",
+        "description": "799 SSH commands were observed, including 59 interactive or non-command SSH sessions."
+      },
+      {
+        "priority": "P1",
+        "title": "High-bypass workflows",
+        "description": "1558 prompts ran in bypassPermissions mode."
+      },
+      {
+        "priority": "P2",
+        "title": "Direct pushes to main",
+        "description": "36 direct pushes to main/master were observed."
+      }
+    ],
+    "whats_working_well": [
+      "Bash dominates denials, which shows caution around shell access",
+      "SSH usage is limited to single remote commands, not interactive sessions"
+    ]
+  },
+  "stability": {
+    "api_errors": 427,
+    "compactions": 366
+  }
+}
