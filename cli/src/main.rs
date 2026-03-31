@@ -7,7 +7,11 @@ use std::fs;
 use std::path::PathBuf;
 
 fn default_json_out() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../ui/report.json")
+    if let Some(home) = std::env::var_os("HOME") {
+        let dir = PathBuf::from(home).join("Documents").join("vibenalytics-security");
+        return dir.join("report.json");
+    }
+    PathBuf::from("report.json")
 }
 
 #[derive(Parser, Debug)]
@@ -67,19 +71,28 @@ fn main() -> Result<()> {
     let analysis = security::analyze(parsed, include_subagents);
 
     let json = serde_json::to_string_pretty(&analysis)?;
+    let json_out = cli.json_out.unwrap_or_else(default_json_out);
 
-    if let Some(json_out) = &cli.json_out {
-        if let Some(parent) = json_out.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(json_out, &json)?;
-        if !cli.quiet {
-            eprintln!("[4/4] wrote JSON report to {}", json_out.display());
-        }
+    if let Some(parent) = json_out.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&json_out, &json)?;
+    if !cli.quiet {
+        eprintln!("[4/4] wrote report to {}", json_out.display());
     }
 
-    if cli.json || cli.json_out.is_none() {
+    if cli.json {
         println!("{json}");
+    }
+
+    // Open the report folder in the file explorer
+    if let Some(parent) = json_out.parent() {
+        #[cfg(target_os = "macos")]
+        { let _ = std::process::Command::new("open").arg(parent).spawn(); }
+        #[cfg(target_os = "linux")]
+        { let _ = std::process::Command::new("xdg-open").arg(parent).spawn(); }
+        #[cfg(target_os = "windows")]
+        { let _ = std::process::Command::new("explorer").arg(parent).spawn(); }
     }
 
     Ok(())
