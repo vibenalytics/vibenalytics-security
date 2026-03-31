@@ -3,7 +3,7 @@
     "report_title": "Claude Code Security Report",
     "transcript_count": 1966,
     "project_count": 70,
-    "total_entries": 339187,
+    "total_entries": 339283,
     "date_range": {
       "start": "2026-01-12",
       "end": "2026-03-31"
@@ -11,8 +11,8 @@
     "include_subagents": true
   },
   "scores": {
-    "overall": 32,
-    "secrets": 25,
+    "overall": 35,
+    "secrets": 35,
     "remote_access": 56,
     "permissions": 27,
     "commands": 22,
@@ -26,38 +26,38 @@
     }
   },
   "secret_exposure": {
-    "total_secrets": 705,
+    "total_secrets": 582,
     "sensitive_reads": 228,
     "env_writes": 56,
     "env_paths": 26,
     "secret_types": [
       {
         "label": "KEY= values",
-        "count": 282
+        "count": 207
       },
       {
         "label": "SECRET= values",
-        "count": 206
-      },
-      {
-        "label": "Postgres URLs (remote)",
-        "count": 73
+        "count": 159
       },
       {
         "label": "Postgres URLs (local)",
-        "count": 67
+        "count": 80
       },
       {
-        "label": "Anthropic tokens",
-        "count": 39
+        "label": "Postgres URLs (remote)",
+        "count": 63
       },
       {
         "label": "Bearer tokens",
-        "count": 22
+        "count": 32
+      },
+      {
+        "label": "Anthropic tokens",
+        "count": 26
       },
       {
         "label": "TOKEN= values",
-        "count": 14
+        "count": 13
       },
       {
         "label": "Private key blocks",
@@ -67,90 +67,83 @@
     "most_exposed": [
       {
         "secret": "RESEND_API_KEY",
-        "hits": 129,
-        "projects": 7
+        "hits": 94,
+        "projects": 6
       },
       {
         "secret": "GOOGLE_CLIENT_SECRET",
-        "hits": 96,
+        "hits": 58,
         "projects": 5
       },
       {
         "secret": "ENCRYPTION_KEY",
-        "hits": 85,
+        "hits": 57,
         "projects": 5
       },
       {
         "secret": "GH_OAUTH_CLIENT_SECRET",
-        "hits": 42,
+        "hits": 33,
         "projects": 4
       },
       {
         "secret": "sk-ant-*",
-        "hits": 39,
-        "projects": 5
-      },
-      {
-        "secret": "RECAPTCHA_SECRET_KEY",
         "hits": 26,
-        "projects": 3
+        "projects": 4
       },
       {
         "secret": "JWT_SECRET",
-        "hits": 23,
+        "hits": 25,
+        "projects": 2
+      },
+      {
+        "secret": "AWS_S3_SECRET_ACCESS_KEY",
+        "hits": 16,
         "projects": 2
       },
       {
         "secret": "APP_SECRET",
-        "hits": 18,
-        "projects": 4
+        "hits": 15,
+        "projects": 3
       },
       {
-        "secret": "AWS_S3_SECRET_ACCESS_KEY",
-        "hits": 14,
+        "secret": "RECAPTCHA_SECRET_KEY",
+        "hits": 12,
         "projects": 2
       },
       {
-        "secret": "MAILCHIMP_API_KEY",
-        "hits": 13,
-        "projects": 3
+        "secret": "STRIPE_SECRET_KEY",
+        "hits": 8,
+        "projects": 2
       }
     ],
     "exposure_by_project": [
       {
         "project": "PagespeedBulk",
         "reads": 68,
-        "secrets": 223,
+        "secrets": 148,
         "writes": 45,
-        "total": 336
-      },
-      {
-        "project": "Vibe/claudnalytics",
-        "reads": 72,
-        "secrets": 130,
-        "writes": 3,
-        "total": 205
+        "total": 261
       },
       {
         "project": "Vibenalytics/vibenalytics",
         "reads": 0,
-        "secrets": 132,
+        "secrets": 173,
         "writes": 0,
-        "total": 132
+        "total": 173
+      },
+      {
+        "project": "Vibe/claudnalytics",
+        "reads": 72,
+        "secrets": 79,
+        "writes": 3,
+        "total": 154
       },
       {
         "project": "claudnalytics/claudnalytics",
         "reads": 28,
-        "secrets": 36,
+        "secrets": 27,
         "writes": 0,
-        "total": 64
-      },
-      {
-        "project": "Webgate/socksfor1.com",
-        "reads": 4,
-        "secrets": 40,
-        "writes": 3,
-        "total": 47
+        "total": 55
       },
       {
         "project": "Diploma/monad",
@@ -160,25 +153,18 @@
         "total": 44
       },
       {
+        "project": "Webgate/socksfor1.com",
+        "reads": 4,
+        "secrets": 28,
+        "writes": 3,
+        "total": 35
+      },
+      {
         "project": "Webgate/context-base",
         "reads": 7,
-        "secrets": 22,
+        "secrets": 14,
         "writes": 2,
-        "total": 31
-      },
-      {
-        "project": "Webgate/gamename.live",
-        "reads": 4,
-        "secrets": 19,
-        "writes": 1,
-        "total": 24
-      },
-      {
-        "project": "TP/genboard",
-        "reads": 4,
-        "secrets": 4,
-        "writes": 0,
-        "total": 8
+        "total": 23
       },
       {
         "project": "Wincent/wincent-careers",
@@ -186,6 +172,20 @@
         "secrets": 0,
         "writes": 0,
         "total": 8
+      },
+      {
+        "project": "Webgate/gamename.live",
+        "reads": 4,
+        "secrets": 2,
+        "writes": 1,
+        "total": 7
+      },
+      {
+        "project": "TP/genboard",
+        "reads": 4,
+        "secrets": 2,
+        "writes": 0,
+        "total": 6
       }
     ]
   },
@@ -242,13 +242,13 @@
         "date": "2026-03-12",
         "commands": 99,
         "top_host": "webgate.codes",
-        "activity_summary": "Interactive / non-command SSH"
+        "activity_summary": "Remote execution"
       },
       {
         "date": "2026-03-13",
         "commands": 83,
         "top_host": "veridas-staging",
-        "activity_summary": "Docker / psql / JWT"
+        "activity_summary": "WordPress / WP-CLI"
       },
       {
         "date": "2026-03-16",
@@ -260,7 +260,7 @@
         "date": "2026-03-18",
         "commands": 76,
         "top_host": "cloud@orb",
-        "activity_summary": "WordPress / WP-CLI"
+        "activity_summary": "Uptime / DB activity"
       },
       {
         "date": "2026-03-23",
@@ -278,19 +278,19 @@
         "date": "2026-03-25",
         "commands": 37,
         "top_host": "vibenalytics@orb",
-        "activity_summary": "Rust build / deploy"
+        "activity_summary": "Interactive / non-command SSH"
       },
       {
         "date": "2026-03-26",
         "commands": 78,
         "top_host": "genboard.sk",
-        "activity_summary": "Remote execution"
+        "activity_summary": "Docker / psql / JWT"
       },
       {
         "date": "2026-03-28",
         "commands": 21,
         "top_host": "api.webgate.tech",
-        "activity_summary": "Docker / psql / JWT"
+        "activity_summary": "Remote execution"
       },
       {
         "date": "2026-03-31",
@@ -398,16 +398,16 @@
     }
   },
   "permission_discipline": {
-    "prompt_total": 4342,
-    "bypass_pct": 43.09,
+    "prompt_total": 4346,
+    "bypass_pct": 43.07,
     "mode_distribution": [
       {
         "label": "bypassPermissions",
-        "count": 1871
+        "count": 1872
       },
       {
         "label": "acceptEdits",
-        "count": 1599
+        "count": 1602
       },
       {
         "label": "default",
@@ -485,7 +485,7 @@
       },
       {
         "hour": 21,
-        "bypass_prompts": 192
+        "bypass_prompts": 193
       },
       {
         "hour": 22,
@@ -582,7 +582,7 @@
     "denials": 293,
     "interrupts": 595,
     "destructive_catches": 16,
-    "override_rate": 20.45,
+    "override_rate": 20.43,
     "most_rejected_tools": [
       {
         "label": "Bash",
@@ -631,7 +631,7 @@
       {
         "priority": "P0",
         "title": "Secret-like exposure",
-        "description": "705 secret-like values or credentials were exposed in transcript context."
+        "description": "582 secret-like values or credentials were exposed in transcript context."
       },
       {
         "priority": "P0",
@@ -646,7 +646,7 @@
       {
         "priority": "P1",
         "title": "High-bypass workflows",
-        "description": "1871 prompts ran in bypassPermissions mode."
+        "description": "1872 prompts ran in bypassPermissions mode."
       },
       {
         "priority": "P2",

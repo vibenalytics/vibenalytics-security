@@ -422,6 +422,7 @@ const NON_SECRET_NAMES: &[&str] = &[
     "FOUND_SECRET", "SECRET_SCANNING", "SECRET_PATTERNS",
     "MAX_MCP_OUTPUT_TOKENS", "MAX_THINKING_TOKENS", "MAX_TOKENS",
     "AUTH_TOKEN_EXPIRED", "AUTH_TOKEN_INVALID",
+    "KEYS", "PKCS8_KEY",
 ];
 
 fn is_false_positive_assignment(name: &str, value: &str) -> bool {
@@ -448,23 +449,30 @@ fn is_false_positive_assignment(name: &str, value: &str) -> bool {
     if value.ends_with("values") || value.ends_with("values</div><div") || value == "assignments</div><div" {
         return true;
     }
-    if value == "," || value == ":" || value == "value" || value == "value," {
+    if value == "," || value == ":" || value == "value" || value == "value," || value == "VAL" {
         return true;
     }
     let lv = value.to_ascii_lowercase();
     // The tool's own text in reports: "TOKEN= regex", "TOKEN= and", etc.
     if lv == "regex" || lv == "regex," || lv == "and" || lv == "assignment" || lv == "assignment," || lv == "**"
-        || lv == "remaining" || lv.starts_with("remaining ")
+        || lv == "remaining" || lv.starts_with("remaining ") || lv == "===" || lv.starts_with("===")
     {
         return true;
     }
     // Placeholders: your-*, <your-*, change-me-*, xxx, ..., placeholder tokens
     if lv.starts_with("your") || lv.starts_with("<your") || lv.starts_with("<generate")
         || lv.starts_with("<openssl") || lv.starts_with("<32-") || lv.starts_with("<token")
-        || lv.starts_with("\\u003c")
+        || lv.starts_with("<strong-") || lv.starts_with("\\u003c")
         || lv == "xxx" || lv == "..." || lv.starts_with("...[")
         || lv.starts_with("change-me") || lv.starts_with("change_this")
         || lv == "\\"
+    {
+        return true;
+    }
+    // Well-known framework placeholder values
+    if lv == "thistokenisnotsosecretchangeit"
+        || lv.starts_with("change_this_secret")
+        || lv.starts_with("your_app_secret")
     {
         return true;
     }
@@ -472,16 +480,24 @@ fn is_false_positive_assignment(name: &str, value: &str) -> bool {
     if value.chars().filter(|c| *c == 'x').count() > 6 && value.len() < 40 {
         return true;
     }
-    // Redacted/truncated values: ****, ends with ...
-    if value.contains("****") || value.ends_with("...") {
+    // Redacted/truncated values: ****, ends with ..., [REDACTED]
+    if value.contains("****") || value.ends_with("...") || value.contains("[REDACTED]") {
         return true;
     }
-    // Values that are just the next env var (multiline .env leak: SECRET=\nNEXT_VAR=)
+    // Values that are just the next env var (multiline .env: value starts with newline/linenum)
     if value.starts_with('\n') || value.starts_with("\r\n") {
         return true;
     }
     // Symfony/config file paths, not actual secret values
     if value.starts_with("%kernel.") || value.starts_with("/config/") {
+        return true;
+    }
+    // Whitespace-only or comment-only values
+    if value.trim().is_empty() || value.trim().starts_with('#') {
+        return true;
+    }
+    // cat -n output artifacts: value contains line number arrows (→) from Read tool
+    if value.contains('\u{2192}') || value.contains('\n') {
         return true;
     }
     // Hash/config names that aren't secrets
@@ -499,6 +515,29 @@ fn is_false_positive_assignment(name: &str, value: &str) -> bool {
     // Known test-only dummy values
     if lv == "abc123" || lv == "sk-1234" || lv.starts_with("a1b2c3") {
         return true;
+    }
+    // Sequential/patterned hex that's obviously a placeholder (0123456789abcdef repeating)
+    if is_repeating_hex_placeholder(value) {
+        return true;
+    }
+    false
+}
+
+fn is_repeating_hex_placeholder(value: &str) -> bool {
+    if value.len() < 32 {
+        return false;
+    }
+    // Check if value is hex and consists of a short pattern repeated
+    if !value.chars().all(|c| c.is_ascii_hexdigit()) {
+        return false;
+    }
+    for chunk_len in [8, 16] {
+        if value.len() % chunk_len == 0 {
+            let chunk = &value[..chunk_len];
+            if value.as_bytes().chunks(chunk_len).all(|c| c == chunk.as_bytes()) {
+                return true;
+            }
+        }
     }
     false
 }
@@ -551,7 +590,15 @@ fn is_localhost_url(url: &str) -> bool {
 fn is_placeholder_url(url: &str) -> bool {
     let lv = url.to_ascii_lowercase();
     lv.contains("user:password") || lv.contains("dummy:dummy") || lv.contains(":!changeme!")
-        || lv.contains("{user}") || lv.contains("${db_") || lv.contains("${postgres_")
+        || lv.contains("{user}") || lv.contains("{password}") || lv.contains("{host}")
+        || lv.contains("${db_") || lv.contains("${postgres_")
+        || lv.contains("__db_password__") || lv.contains(":password@")
+        || lv.contains("user:password@internal_hostname")
+        || lv.contains("****") || lv.contains("[redacted]")
+        || lv.contains("xxxxx")
+        || lv.ends_with(",") || lv.ends_with("),")
+        // Truncated/invalid URLs
+        || lv.ends_with("://") || lv.ends_with("://,")
 }
 
 fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut SecretTally) {
@@ -573,12 +620,17 @@ fn count_secret_text(rules: &Rules, text: &str, project: &str, tally: &mut Secre
         }
     }
 
-    let ant = rules.anthropic_tokens.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
-    if ant > 0 {
-        inc(&mut tally.by_type, "Anthropic tokens", ant);
-        inc(&mut tally.by_name, "sk-ant-*", ant);
+    let ant_matches: HashSet<String> = rules.anthropic_tokens.find_iter(text).map(|m| m.as_str().to_string()).collect();
+    for token in &ant_matches {
+        let lower = token.to_ascii_lowercase();
+        // Skip fake/placeholder tokens
+        if lower.contains("fake") || lower.contains("your_") || lower.contains("xxxxx") {
+            continue;
+        }
+        inc(&mut tally.by_type, "Anthropic tokens", 1);
+        inc(&mut tally.by_name, "sk-ant-*", 1);
         tally.name_projects.entry("sk-ant-*".to_string()).or_default().insert(project.to_string());
-        *tally.by_project.entry(project.to_string()).or_insert(0) += ant;
+        *tally.by_project.entry(project.to_string()).or_insert(0) += 1;
     }
     let bearer = rules.bearer_tokens.find_iter(text).map(|m| m.as_str().to_string()).collect::<HashSet<_>>().len() as u32;
     if bearer > 0 {
