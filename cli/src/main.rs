@@ -80,9 +80,9 @@ fn main() -> Result<()> {
     }
 
     // Write self-contained report.html with data embedded
-    let html_template = include_str!("../../ui/security-metrics.html");
+    let html_template = include_str!("../../ui/security-metrics-dev-brand-sections.html");
     let html = html_template.replace(
-        "fetch(dataUrl)\n  .then(r => { if (!r.ok) throw new Error(`Failed to load ${dataUrl}: ${r.status}`); return r.json(); })\n  .then(render)",
+        "fetch(dataUrl)\n      .then(r => { if (!r.ok) throw new Error(`Failed to load ${dataUrl}: ${r.status}`); return r.json(); })\n      .then(render)",
         &format!("Promise.resolve({}).then(render)", json),
     );
     let html_out = out_dir.join("report.html");

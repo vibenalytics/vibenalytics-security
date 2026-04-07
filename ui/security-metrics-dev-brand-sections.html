@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111113">
+  <title>Security Metrics Report</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg: #111113;
+      --surface: #1a1a1e;
+      --surface-2: #202026;
+      --surface-3: #24242b;
+      --elevated: #232328;
+      --line: #2a2a31;
+      --line-soft: rgba(255, 255, 255, 0.06);
+      --border-subtle: #262630;
+      --border: #32323e;
+      --text: #ededf0;
+      --text-sec: #8e8e9a;
+      --text-muted: #666672;
+      --accent: #cc8b65;
+      --accent-soft: rgba(204, 139, 101, 0.14);
+      --red: #e05a4a;
+      --orange: #d99b78;
+      --green: #4eca8b;
+      --blue: #5b9fe0;
+      --purple: #9b7be0;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.55 "Plus Jakarta Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .mono {
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 22px 20px 56px;
+    }
+
+    .loading,
+    .error {
+      max-width: 760px;
+      margin: 100px auto;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .error {
+      color: var(--red);
+    }
+
+    /* ── Header ── */
+    .header-top {
+      padding: 18px 0 20px;
+      text-align: center;
+    }
+
+    .header-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .header-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* ── Hero section (from dev) ── */
+    .hero-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+      margin: 12px 0 0;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .hero-row::before {
+      content: '';
+      position: absolute;
+      top: -32px;
+      bottom: 0;
+      left: 50%;
+      width: 100vw;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--hero-glow, transparent) 9%, transparent) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hero-row::after {
+      content: '';
+      position: absolute;
+      top: -32px;
+      bottom: 0;
+      left: 50%;
+      width: 100vw;
+      transform: translateX(-50%);
+      background-image: radial-gradient(circle, rgba(137, 137, 150, 0.25) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 75%);
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 75%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hero-row>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-gauges {
+      flex: 0 0 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .composite-ring {
+      position: relative;
+      overflow: visible;
+      width: 100%;
+    }
+
+    .hero-info {
+      flex: 0 0 auto;
+      width: fit-content;
+    }
+
+    .hero-kicker {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: "JetBrains Mono", monospace;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .hero-persona-title {
+      font-size: 42px;
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-persona-title.tone-negative {
+      color: var(--red);
+    }
+
+    .hero-persona-title.tone-positive {
+      color: var(--green);
+    }
+
+    .hero-persona-title.tone-neutral {
+      color: var(--blue);
+    }
+
+    .hero-tagline {
+      margin-top: 12px;
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--text-sec);
+      max-width: 40ch;
+    }
+
+    .hero-scores {
+      margin-top: 28px;
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .hero-score-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-score-val {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .hero-score-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-download {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+
+    .download-card-btn {
+      display: inline-flex;
+      align-items: center;
+      background: var(--text);
+      border: none;
+      color: var(--bg);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .download-card-btn:hover {
+      opacity: 0.85;
+    }
+
+    .review-link {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .review-link:hover {
+      color: var(--text-sec);
+    }
+
+    .card-preview {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 160px;
+      aspect-ratio: 4/5;
+      padding: 14px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 0;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(0) scale(0.3) rotate(0deg);
+      transform-origin: bottom left;
+      transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .card-preview[data-tone="negative"] {
+      background: #161214;
+    }
+
+    .card-preview[data-tone="positive"] {
+      background: #131816;
+    }
+
+    .card-preview[data-tone="neutral"] {
+      background: #141518;
+    }
+
+    .cp-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .cp-bar[data-tone="negative"] {
+      background: linear-gradient(90deg, var(--red), transparent 60%);
+    }
+
+    .cp-bar[data-tone="positive"] {
+      background: linear-gradient(90deg, var(--green), transparent 60%);
+    }
+
+    .cp-bar[data-tone="neutral"] {
+      background: linear-gradient(90deg, var(--blue), transparent 60%);
+    }
+
+    .cp-kicker {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .cp-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .cp-title[data-tone="negative"] {
+      color: var(--red);
+    }
+
+    .cp-title[data-tone="positive"] {
+      color: var(--green);
+    }
+
+    .cp-title[data-tone="neutral"] {
+      color: var(--blue);
+    }
+
+    .cp-score {
+      margin-top: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .download-card-btn:hover~.card-preview {
+      opacity: 1;
+      transform: translateY(-29%) scale(0.8) rotate(-8deg);
+    }
+
+    /* ── Persona card (hidden, download only) ── */
+    .persona-card {
+      width: 420px;
+      aspect-ratio: 4/5;
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      padding: 36px 32px 28px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 0;
+      border: none;
+    }
+
+    .persona-card[data-tone="negative"] {
+      background: linear-gradient(155deg, #1e1418 0%, #1a1114 30%, #151518 70%, #111113 100%);
+      box-shadow: inset 0 1px 0 rgba(224, 90, 74, 0.08);
+    }
+
+    .persona-card[data-tone="positive"] {
+      background: linear-gradient(155deg, #131e19 0%, #121a16 30%, #131518 70%, #111113 100%);
+      box-shadow: inset 0 1px 0 rgba(78, 202, 139, 0.08);
+    }
+
+    .persona-card[data-tone="neutral"] {
+      background: linear-gradient(155deg, #15161e 0%, #131419 30%, #131518 70%, #111113 100%);
+      box-shadow: inset 0 1px 0 rgba(91, 159, 224, 0.08);
+    }
+
+    .persona-accent-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      z-index: 2;
+    }
+
+    .persona-card[data-tone="negative"] .persona-accent-bar {
+      background: linear-gradient(90deg, var(--red), rgba(204, 139, 101, 0.4) 60%, transparent);
+    }
+
+    .persona-card[data-tone="positive"] .persona-accent-bar {
+      background: linear-gradient(90deg, var(--green), rgba(91, 159, 224, 0.4) 60%, transparent);
+    }
+
+    .persona-card[data-tone="neutral"] .persona-accent-bar {
+      background: linear-gradient(90deg, var(--blue), rgba(142, 142, 154, 0.3) 60%, transparent);
+    }
+
+    .persona-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .persona-kicker {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: "JetBrains Mono", monospace;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .persona-title {
+      font-size: 32px;
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .persona-card[data-tone="negative"] .persona-title {
+      color: var(--red);
+    }
+
+    .persona-card[data-tone="positive"] .persona-title {
+      color: var(--green);
+    }
+
+    .persona-card[data-tone="neutral"] .persona-title {
+      color: var(--blue);
+    }
+
+    .persona-tagline {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text-sec);
+      max-width: 32ch;
+      position: relative;
+      z-index: 1;
+    }
+
+    .persona-card-body {
+      margin-top: auto;
+      margin-bottom: auto;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .persona-scores {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .persona-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+    }
+
+    .persona-score-label {
+      color: var(--text-sec);
+      font-weight: 500;
+    }
+
+    .persona-score-val {
+      font-weight: 700;
+    }
+
+    .persona-footer {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    .persona-logo {
+      height: 20px;
+      width: auto;
+      opacity: 1;
+      vertical-align: middle;
+    }
+
+    .persona-score {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .persona-card.capturing::before,
+    .persona-card.capturing::after {
+      display: none !important;
+    }
+
+    .persona-card.capturing {
+      box-shadow: none !important;
+    }
+
+    .persona-card.capturing[data-tone="negative"] {
+      background: #161214 !important;
+    }
+
+    .persona-card.capturing[data-tone="positive"] {
+      background: #131816 !important;
+    }
+
+    .persona-card.capturing[data-tone="neutral"] {
+      background: #141518 !important;
+    }
+
+    .persona-mini-ring {
+      flex: 0 0 160px;
+    }
+
+    .persona-mini-ring svg {
+      width: 160px;
+      height: 160px;
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.15s;
+      max-width: 260px;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+    }
+
+    /* ── Brand section layout ── */
+    .report {
+      display: grid;
+      gap: 22px;
+      margin-top: 18px;
+    }
+
+    .report-section {
+      padding: 24px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top right, rgba(204, 139, 101, 0.06), transparent 34%),
+        linear-gradient(180deg, rgba(26, 26, 30, 0.985), rgba(22, 22, 27, 0.985));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow);
+    }
+
+    .section-top {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--section-color, var(--accent));
+      font: 600 11px/1 "JetBrains Mono", monospace;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .section-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--section-color, var(--accent)) 30%, transparent);
+      background: color-mix(in srgb, var(--section-color, var(--accent)) 10%, transparent);
+      color: var(--section-color, var(--accent));
+      font: 600 11px/1 "JetBrains Mono", monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .section-heading {
+      font: 700 34px/0.96 "Plus Jakarta Sans", sans-serif;
+      letter-spacing: -0.05em;
+      color: var(--section-color, var(--text));
+    }
+
+    .section-copy {
+      max-width: 64ch;
+      color: var(--text-sec);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .section-body {
+      display: grid;
+      gap: 18px;
+    }
+
+    .subgrid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .subgrid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .accent-card {
+      border-color: rgba(204, 139, 101, 0.08);
+    }
+
+    .card-header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font: 700 28px/1 "Plus Jakarta Sans", sans-serif;
+      letter-spacing: -0.045em;
+    }
+
+    .card-note {
+      max-width: 36ch;
+      color: var(--text-sec);
+      font-size: 13px;
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .report-section .mini-stats {
+      margin-bottom: 0;
+    }
+
+    .mini {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mini strong {
+      display: block;
+      font: 700 30px/0.95 "Plus Jakarta Sans", sans-serif;
+      letter-spacing: -0.05em;
+    }
+
+    .mini span {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-sec);
+      font-size: 12px;
+    }
+
+    .chart {
+      min-height: 220px;
+    }
+
+    .chart svg {
+      display: block;
+      width: 100%;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+      color: var(--text-sec);
+      font-size: 12px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .perm-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .perm-legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .perm-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-top: 4px;
+      flex: 0 0 auto;
+    }
+
+    .perm-legend-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .perm-legend-meta {
+      font-size: 11px;
+      color: var(--text-sec);
+    }
+
+    .share-segment {
+      height: 100%;
+      flex: 0 0 auto;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .detail:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail .name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail .name.with-sub {
+      white-space: normal;
+    }
+
+    .detail-sub {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .term-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font: 600 10px/1.1 "JetBrains Mono", monospace;
+      letter-spacing: 0.01em;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .term-chip.positive {
+      color: #b9f3d5;
+      background: linear-gradient(135deg, rgba(78, 202, 139, 0.24), rgba(91, 159, 224, 0.10));
+      border-color: rgba(78, 202, 139, 0.24);
+    }
+
+    .term-chip.negative {
+      color: #ffc2bb;
+      background: linear-gradient(135deg, rgba(224, 90, 74, 0.24), rgba(217, 155, 120, 0.12));
+      border-color: rgba(224, 90, 74, 0.24);
+    }
+
+    .detail .num,
+    .detail .meta {
+      color: var(--text-sec);
+      font: 500 12px/1.4 "JetBrains Mono", monospace;
+      white-space: nowrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--text-sec);
+      font: 500 11px/1.2 "JetBrains Mono", monospace;
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font: 600 11px/1 "JetBrains Mono", monospace;
+    }
+
+    .badge-red {
+      color: var(--red);
+      background: rgba(224, 90, 74, 0.16);
+    }
+
+    .badge-orange {
+      color: var(--orange);
+      background: rgba(204, 139, 101, 0.14);
+    }
+
+    .badge-blue {
+      color: var(--blue);
+      background: rgba(91, 159, 224, 0.14);
+    }
+
+    .badge-green {
+      color: var(--green);
+      background: rgba(78, 202, 139, 0.14);
+    }
+
+    .risk-list,
+    .good-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .risk-item,
+    .good-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .risk-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      min-width: 0;
+    }
+
+    .risk-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .risk-desc,
+    .good-item {
+      color: var(--text-sec);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 8px 4px 0;
+      color: var(--text-sec);
+      font: 500 12px/1.4 "JetBrains Mono", monospace;
+    }
+
+    .footer a {
+      color: var(--text-sec);
+      text-decoration: none;
+    }
+
+    @media (max-width:1180px) {
+
+      .subgrid-2,
+      .subgrid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width:960px) {
+      .hero-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .hero-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .hero-scores {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width:760px) {
+      .page {
+        padding: 14px 14px 40px;
+      }
+
+      .mini-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .footer {
+        display: grid;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="tooltip" id="tip"></div>
+  <div class="page" id="app">
+    <div class="loading">Loading report...</div>
+  </div>
+
+  <script>
+    const C = { red: '#e05a4a', accent: '#cc8b65', orange: '#d99b78', green: '#4eca8b', blue: '#5b9fe0', purple: '#9b7be0', text: '#ededf0', sec: '#8e8e9a', muted: '#666672', elevated: '#232328', line: '#2a2a31' };
+
+    const tip = document.getElementById('tip');
+    const showTip = (ev, html) => {
+      tip.innerHTML = html;
+      tip.classList.add('visible');
+      const x = Math.min(ev.clientX + 12, window.innerWidth - tip.offsetWidth - 16);
+      const y = ev.clientY + 16;
+      tip.style.left = x + 'px';
+      tip.style.top = (y + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 8 : y) + 'px';
+    };
+    const hideTip = () => { tip.classList.remove('visible'); };
+
+    const scoreColor = s => s < 40 ? C.red : s < 70 ? C.orange : C.green;
+    const scoreTone = s => s < 35 ? { color: C.red, state: 'Fragile' } : s < 70 ? { color: C.orange, state: 'Mixed' } : { color: C.green, state: 'Controlled' };
+    const arr = v => Array.isArray(v) ? v : [];
+    const params = new URLSearchParams(location.search);
+    const dataUrl = params.get('data') || './report.json';
+
+    function esc(str) { return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function mini(label, value, color) { return `<div class="mini"><strong style="color:${color}">${value}</strong><span>${label}</span></div>`; }
+    function riskBadge(p) { return p === 'P0' ? 'badge-red' : p === 'P1' ? 'badge-orange' : 'badge-blue'; }
+    function formatTopTerms(items, tone, limit = 3) {
+      return arr(items).slice(0, limit).map(item => `<span class="term-chip ${tone}">${esc(item.label)} <span style="opacity:.8;margin-left:6px">${item.count}</span></span>`).join('');
+    }
+    function modeCount(data, label) {
+      const row = arr(data.permission_discipline.mode_distribution).find(item => item.label === label);
+      return row ? row.count : 0;
+    }
+    function derivePersona(data) {
+      const overall = data.scores.overall || 0;
+      const totalSecrets = data.secret_exposure.total_secrets || 0;
+      const bypassPct = Math.round(data.permission_discipline.bypass_pct || 0);
+      const sshCommands = data.ssh_remote_access.ssh_commands || 0;
+      const critical = data.destructive_commands.critical || 0;
+      const agents = data.autonomous_agents.agents_spawned || 0;
+
+      if (totalSecrets >= 100 || data.scores.secrets < 25) {
+        return { tone: 'negative', title: 'Rotation as a Service', tagline: `Your AI has seen ${totalSecrets} secret-like values in context.` };
+      }
+      if (bypassPct >= 50 || data.scores.permissions < 25) {
+        return { tone: 'negative', title: 'Guardrails Optional', tagline: `${bypassPct}% of prompts ran in bypass mode.` };
+      }
+      if (critical >= 20 || data.scores.commands < 25) {
+        return { tone: 'negative', title: 'Command Line Chaos', tagline: `${critical} critical commands were observed in the scan window.` };
+      }
+      if (sshCommands >= 250 || data.scores.remote_access < 35) {
+        return { tone: 'neutral', title: 'Remote First, Controls Later', tagline: `${sshCommands} SSH commands were issued across remote hosts.` };
+      }
+      if (overall >= 70) {
+        return { tone: 'positive', title: 'Mostly Under Control', tagline: `The scan shows lower-risk patterns across secrets, permissions, and command usage.` };
+      }
+      return { tone: 'neutral', title: 'Mixed Control Surface', tagline: `${agents} agents, ${critical} critical commands, and ${bypassPct}% bypass mode paint a mixed picture.` };
+    }
+    function buildPriorityRisks(data) {
+      const items = [];
+      const bypassPrompts = modeCount(data, 'bypassPermissions');
+      const add = (priority, title, description) => items.push({ priority, title, description });
+      const priorityOrder = { P0: 0, P1: 1, P2: 2 };
+
+      if (data.secret_exposure.total_secrets > 0) {
+        add(data.secret_exposure.total_secrets >= 100 ? 'P0' : 'P1', 'Secret exposure', `${data.secret_exposure.total_secrets} secret-like values were detected in scan data.`);
+      }
+      if ((data.autonomous_agents.in_bypass_mode || 0) > 0) {
+        add(data.autonomous_agents.in_bypass_mode >= 100 ? 'P0' : 'P1', 'Agents in bypass mode', `${data.autonomous_agents.in_bypass_mode} agents ran in bypass mode.`);
+      }
+      if (bypassPrompts > 0) {
+        add((data.permission_discipline.bypass_pct || 0) >= 50 ? 'P1' : 'P2', 'Bypass-mode prompts', `${bypassPrompts} prompts ran in bypass mode.`);
+      }
+      if ((data.ssh_remote_access.ssh_commands || 0) > 0) {
+        add(data.ssh_remote_access.ssh_commands >= 250 ? 'P1' : 'P2', 'SSH activity', `${data.ssh_remote_access.ssh_commands} SSH commands were observed across ${data.ssh_remote_access.unique_hosts} hosts.`);
+      }
+      if ((data.destructive_commands.critical || 0) > 0) {
+        add(data.destructive_commands.critical >= 20 ? 'P0' : 'P1', 'Critical commands', `${data.destructive_commands.critical} critical shell commands were detected.`);
+      }
+      if ((data.destructive_commands.git_safety.push_to_main || 0) > 0) {
+        add(data.destructive_commands.git_safety.push_to_main >= 10 ? 'P1' : 'P2', 'Direct pushes to main', `${data.destructive_commands.git_safety.push_to_main} direct pushes to main or master were observed.`);
+      }
+      if ((data.destructive_commands.git_safety.force_push || 0) > 0) {
+        add('P1', 'Force pushes', `${data.destructive_commands.git_safety.force_push} force pushes were observed.`);
+      }
+
+      return items.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]).slice(0, 5);
+    }
+    function buildPositiveSignals(data) {
+      const items = [];
+      const defaultPrompts = modeCount(data, 'default');
+      if ((data.destructive_commands.git_safety.force_push || 0) === 0) items.push('No force pushes were observed.');
+      if ((data.destructive_commands.git_safety.reset_hard || 0) === 0) items.push('No `git reset --hard` commands were observed.');
+      if ((data.ssh_remote_access.interactive_ssh || 0) === 0) items.push('SSH activity did not include interactive sessions.');
+      if ((data.human_overrides.denials || 0) > 0) items.push(`${data.human_overrides.denials} user denials show that some risky actions were interrupted.`);
+      if ((data.user_sentiment.total_negative || 0) <= 20) items.push('Negative sentiment terms were rare across prompts.');
+      if (defaultPrompts > 0) items.push(`${defaultPrompts} prompts still ran with default permissions.`);
+      return items.slice(0, 5);
+    }
+
+    function getChartWidth(id, fallback = 640) {
+      const el = document.querySelector(id);
+      if (!el) return fallback;
+      return Math.max(280, Math.round(el.clientWidth || el.getBoundingClientRect().width || fallback));
+    }
+    function labelGutter(items, min = 98, max = 220) {
+      const longest = items.reduce((a, i) => Math.max(a, String(i.label || '').length), 0);
+      return Math.max(min, Math.min(max, longest * 7 + 26));
+    }
+
+    /* ── Ring gauges (from dev) ── */
+    function compositeRing(containerId, metricsId, overall, segments) {
+      const r = 120, stroke = 17, gapAngle = 0.06;
+      const labelR = r + stroke / 2 + 26;
+      const color = scoreColor(overall);
+      const n = segments.length;
+      const totalGap = gapAngle * n;
+      const segSpan = (Math.PI * 2 - totalGap) / n;
+      const vb = labelR + 72;
+      const svg = d3.select(containerId).html('').append('svg')
+        .attr('viewBox', `${-vb} ${-vb} ${vb * 2} ${vb * 2}`)
+        .style('width', '100%').style('max-width', '440px');
+      const g = svg.append('g');
+      let cursor = 0;
+      segments.forEach((seg, i) => {
+        const startAngle = cursor;
+        const endAngle = cursor + segSpan;
+        const midAngle = startAngle + segSpan / 2;
+        const scoreEnd = startAngle + segSpan * (seg.score / 100);
+        cursor = endAngle + gapAngle;
+        const segColor = scoreColor(seg.score);
+        const segG = g.append('g').style('transition', 'filter 0.2s, transform 0.2s').style('transform-origin', '0 0');
+        const trackArc = d3.arc().innerRadius(r - stroke / 2).outerRadius(r + stroke / 2).startAngle(startAngle).endAngle(endAngle).cornerRadius(2);
+        segG.append('path').attr('d', trackArc()).attr('fill', C.elevated);
+        if (seg.score > 0) {
+          const fillArc = d3.arc().innerRadius(r - stroke / 2).outerRadius(r + stroke / 2).startAngle(startAngle).cornerRadius(2);
+          segG.append('path').attr('fill', segColor).attr('opacity', 0.9)
+            .transition().duration(600).delay(i * 100).attrTween('d', () => {
+              const interp = d3.interpolate(startAngle + 0.01, scoreEnd);
+              return t => fillArc.endAngle(interp(t))();
+            });
+        }
+        const hoverArc = d3.arc().innerRadius(r - stroke - 8).outerRadius(r + stroke + 8).startAngle(startAngle).endAngle(endAngle);
+        segG.append('path').attr('d', hoverArc()).attr('fill', 'transparent').attr('cursor', 'default');
+        segG
+          .on('mouseover', ev => {
+            segG.style('filter', 'brightness(1.4)');
+            showTip(ev, `<div style="font-weight:600;margin-bottom:4px;color:${segColor}">${seg.label}</div><div style="color:${C.sec};line-height:1.5">${seg.detail}</div>`);
+          })
+          .on('mousemove', ev => {
+            const x = Math.min(ev.clientX + 12, window.innerWidth - tip.offsetWidth - 16);
+            const y = ev.clientY + 16;
+            tip.style.left = x + 'px';
+            tip.style.top = (y + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 8 : y) + 'px';
+          })
+          .on('mouseout', () => { segG.style('filter', 'none'); hideTip(); });
+        const lx = Math.sin(midAngle) * labelR;
+        const ly = -Math.cos(midAngle) * labelR;
+        const sinMid = Math.sin(midAngle);
+        const anchor = sinMid > 0.3 ? 'start' : sinMid < -0.3 ? 'end' : 'middle';
+        g.append('text').attr('x', lx).attr('y', ly).attr('dy', '.35em').attr('text-anchor', anchor).attr('font-size', 13).attr('font-weight', 600).attr('fill', C.sec).attr('font-family', "'JetBrains Mono', monospace").text(seg.label);
+        g.append('text').attr('x', lx).attr('y', ly + 17).attr('dy', '.35em').attr('text-anchor', anchor).attr('font-size', 12).attr('font-weight', 700).attr('fill', segColor).attr('font-family', "'JetBrains Mono', monospace").text(seg.score + '%');
+      });
+      const txt = g.append('text').attr('text-anchor', 'middle').attr('y', -2).attr('font-size', 62).attr('fill', color).attr('font-family', "'JetBrains Mono', monospace").attr('font-weight', 700);
+      d3.select({ v: 0 }).transition().duration(600).tween('text', function () { const i = d3.interpolateRound(0, overall); return t => txt.text(i(t)); });
+      g.append('text').attr('text-anchor', 'middle').attr('y', 24).attr('font-size', 14).attr('fill', C.muted).attr('font-family', "'JetBrains Mono', monospace").text('/ 100');
+      d3.select(metricsId).html('');
+    }
+
+    function miniRing(containerId, overall, segments) {
+      const r = 54, stroke = 8, gapAngle = 0.08;
+      const n = segments.length, totalGap = gapAngle * n, segSpan = (Math.PI * 2 - totalGap) / n;
+      const vb = r + stroke / 2 + 2;
+      const svg = d3.select(containerId).html('').append('svg').attr('viewBox', `${-vb} ${-vb} ${vb * 2} ${vb * 2}`);
+      const g = svg.append('g');
+      let cursor = 0;
+      segments.forEach((seg, i) => {
+        const startAngle = cursor, endAngle = cursor + segSpan, scoreEnd = startAngle + segSpan * (seg.score / 100);
+        cursor = endAngle + gapAngle;
+        const segColor = scoreColor(seg.score);
+        const trackArc = d3.arc().innerRadius(r - stroke / 2).outerRadius(r + stroke / 2).startAngle(startAngle).endAngle(endAngle).cornerRadius(2);
+        g.append('path').attr('d', trackArc()).attr('fill', C.elevated);
+        if (seg.score > 0) {
+          const fillArc = d3.arc().innerRadius(r - stroke / 2).outerRadius(r + stroke / 2).startAngle(startAngle).cornerRadius(2);
+          g.append('path').attr('fill', segColor).attr('opacity', 0.9).transition().duration(600).delay(i * 80).attrTween('d', () => { const interp = d3.interpolate(startAngle + 0.01, scoreEnd); return t => fillArc.endAngle(interp(t))(); });
+        }
+      });
+      const color = scoreColor(overall);
+      const txt = g.append('text').attr('text-anchor', 'middle').attr('y', -1).attr('font-size', 28).attr('fill', color).attr('font-family', "'JetBrains Mono', monospace").attr('font-weight', 700);
+      d3.select({ v: 0 }).transition().duration(600).tween('text', function () { const i = d3.interpolateRound(0, overall); return t => txt.text(i(t)); });
+      g.append('text').attr('text-anchor', 'middle').attr('y', 15).attr('font-size', 9).attr('fill', C.muted).attr('font-family', "'JetBrains Mono', monospace").text('/ 100');
+    }
+
+    function downloadCard() {
+      const card = document.querySelector('.persona-card');
+      card.classList.add('capturing');
+      html2canvas(card, { backgroundColor: null, scale: 3 }).then(canvas => {
+        card.classList.remove('capturing');
+        const a = document.createElement('a');
+        a.download = 'security-persona.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      }).catch(() => card.classList.remove('capturing'));
+    }
+
+    /* ── Brand chart functions ── */
+    function hBarChart(id, items, options = {}) {
+      const data = items.slice(0, options.limit || items.length);
+      const width = getChartWidth(id, options.width || 720);
+      const left = options.left || labelGutter(data, 104, Math.min(250, Math.round(width * 0.36)));
+      const rowH = options.rowHeight || 28, gap = options.gap || 8;
+      const margin = { top: 8, right: 40, bottom: 8, left };
+      const height = data.length * (rowH + gap) + margin.top + margin.bottom;
+      const innerW = width - margin.left - margin.right;
+      const max = d3.max(data, d => d.value) || 1;
+      const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      const x = d3.scaleLinear().domain([0, max]).range([0, innerW]);
+      data.forEach((d, i) => {
+        const y = i * (rowH + gap);
+        g.append('rect').attr('x', 0).attr('y', y + 7).attr('width', innerW).attr('height', rowH - 14).attr('rx', 6).attr('fill', 'rgba(255,255,255,0.05)');
+        g.append('rect').attr('x', 0).attr('y', y + 7).attr('width', x(d.value)).attr('height', rowH - 14).attr('rx', 6).attr('fill', d.color || C.blue);
+        g.append('text').attr('x', -10).attr('y', y + rowH / 2).attr('dy', '.35em').attr('text-anchor', 'end').attr('font-size', 12).attr('fill', C.text).text(d.label);
+        g.append('text').attr('x', x(d.value) + 8).attr('y', y + rowH / 2).attr('dy', '.35em').attr('font-size', 12).attr('font-family', '"JetBrains Mono", monospace').attr('fill', d.color || C.blue).text(d.value);
+      });
+    }
+
+    function stackedProjectChart(id, projects) {
+      const data = projects.slice(0, 8);
+      const width = getChartWidth(id, 760);
+      const left = labelGutter(data.map(d => ({ label: d.project })), 140, Math.min(260, Math.round(width * 0.42)));
+      const rowH = 30, gap = 8;
+      const margin = { top: 6, right: 40, bottom: 10, left };
+      const height = data.length * (rowH + gap) + margin.top + margin.bottom;
+      const innerW = width - margin.left - margin.right;
+      const max = d3.max(data, d => d.total) || 1;
+      const x = d3.scaleLinear().domain([0, max]).range([0, innerW]);
+      const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      data.forEach((d, i) => {
+        const y = i * (rowH + gap);
+        g.append('rect').attr('x', 0).attr('y', y + 6).attr('width', innerW).attr('height', rowH - 12).attr('rx', 6).attr('fill', 'rgba(255,255,255,0.05)');
+        let cx = 0;
+        [{ value: d.reads, color: C.blue }, { value: d.secrets, color: C.red }, { value: d.writes, color: C.accent }].forEach(p => {
+          if (!p.value) return;
+          g.append('rect').attr('x', cx).attr('y', y + 6).attr('width', x(p.value)).attr('height', rowH - 12).attr('fill', p.color);
+          cx += x(p.value);
+        });
+        g.append('text').attr('x', -10).attr('y', y + rowH / 2).attr('dy', '.35em').attr('text-anchor', 'end').attr('font-size', 12).attr('fill', C.text).text(d.project);
+        g.append('text').attr('x', innerW + 8).attr('y', y + rowH / 2).attr('dy', '.35em').attr('font-size', 12).attr('font-family', '"JetBrains Mono", monospace').attr('fill', C.muted).text(d.total);
+      });
+    }
+
+    function donut(id, data, total, centerText) {
+      const w = 280, h = 280;
+      const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${w} ${h}`);
+      const g = svg.append('g').attr('transform', `translate(${w / 2},${w / 2 - 10})`);
+      const pie = d3.pie().value(d => d.v).sort(null).padAngle(0.03);
+      const arc = d3.arc().innerRadius(78).outerRadius(108);
+      g.append('circle').attr('r', 93).attr('fill', 'none').attr('stroke', C.elevated).attr('stroke-width', 30);
+      g.selectAll('path').data(pie(data)).join('path').attr('d', arc).attr('fill', d => d.data.c).attr('opacity', 0.9).attr('stroke', '#1a1a1e').attr('stroke-width', 2);
+      g.append('text').attr('text-anchor', 'middle').attr('y', -6).attr('font-size', 24).attr('font-weight', 600).attr('fill', C.red).text(centerText);
+      g.append('text').attr('text-anchor', 'middle').attr('y', 14).attr('font-size', 10).attr('fill', C.sec).text('bypass share');
+    }
+
+    function severityColumns(id, items) {
+      const data = items.slice();
+      const width = getChartWidth(id, 360);
+      const height = 220;
+      const margin = { top: 16, right: 10, bottom: 34, left: 34 };
+      const innerW = width - margin.left - margin.right, innerH = height - margin.top - margin.bottom;
+      const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerW]).padding(0.28);
+      const y = d3.scaleLinear().domain([0, d3.max(data, d => d.count) || 1]).nice().range([innerH, 0]);
+      const colorMap = { critical: C.red, high: C.orange, medium: C.blue, low: C.green };
+      const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      g.append('g').attr('transform', `translate(0,${innerH})`).call(d3.axisBottom(x)).call(a => a.selectAll('text').attr('fill', C.muted).attr('font-size', 10)).call(a => a.selectAll('path,line').attr('stroke', C.line));
+      g.append('g').call(d3.axisLeft(y).ticks(4)).call(a => a.selectAll('text').attr('fill', C.muted).attr('font-size', 10)).call(a => a.selectAll('path,line').attr('stroke', C.line));
+      g.selectAll('rect').data(data).enter().append('rect').attr('x', d => x(d.label)).attr('y', d => y(d.count)).attr('width', x.bandwidth()).attr('height', d => innerH - y(d.count)).attr('rx', 8).attr('fill', d => colorMap[d.label] || C.blue);
+    }
+
+    function modeTrendChart(id, rows) {
+      const data = rows.slice().sort((a, b) => a.date.localeCompare(b.date)).map(d => {
+        const bypass = d.bypass || 0, ae = d.accept_edits || 0, def = d.default || 0, total = bypass + ae + def;
+        return { date: d.date, bypass: total ? (bypass / total) * 100 : 0, accept_edits: total ? (ae / total) * 100 : 0, default: total ? (def / total) * 100 : 0 };
+      });
+      const width = getChartWidth(id, 720), height = 250;
+      const margin = { top: 18, right: 18, bottom: 36, left: 34 };
+      const innerW = width - margin.left - margin.right, innerH = height - margin.top - margin.bottom;
+      const x = d3.scaleBand().domain(data.map(d => d.date)).range([0, innerW]).padding(0.18);
+      const y = d3.scaleLinear().domain([0, 100]).range([innerH, 0]);
+      const tickEvery = Math.max(1, Math.ceil(data.length / 8));
+      const tickDates = data.filter((_, i) => i % tickEvery === 0).map(d => d.date);
+      const svg = d3.select(id).html('').append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d => `${d}%`)).call(a => a.selectAll('text').attr('fill', C.muted).attr('font-size', 10)).call(a => a.selectAll('path,line').attr('stroke', C.line));
+      g.append('g').attr('transform', `translate(0,${innerH})`).call(d3.axisBottom(x).tickValues(tickDates).tickFormat(d => d.slice(5))).call(a => a.selectAll('text').attr('fill', C.muted).attr('font-size', 10)).call(a => a.selectAll('path,line').attr('stroke', C.line));
+      data.forEach(d => {
+        const xPos = x(d.date), barW = x.bandwidth();
+        let cursor = 0;
+        [{ value: d.bypass, color: C.red }, { value: d.accept_edits, color: C.orange }, { value: d.default, color: C.green }].forEach(seg => {
+          if (seg.value <= 0) return;
+          const segH = innerH - y(seg.value), yPos = innerH - cursor - segH;
+          g.append('rect').attr('x', xPos).attr('y', yPos).attr('width', barW).attr('height', segH).attr('fill', seg.color);
+          cursor += segH;
+        });
+      });
+    }
+
+    /* ── Render ── */
+    function render(data) {
+      const p = derivePersona(data);
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+  <div class="header-top">
+    <div class="header-title">Security Report</div>
+    <div class="header-meta">${data.hero.transcript_count} transcripts · ${data.hero.project_count} projects · ${(data.hero.prompt_total || 0).toLocaleString()} prompts · ${Math.round(data.hero.total_entries / 1000)}k entries</div>
+  </div>
+  <div class="hero-row">
+    <div class="hero-gauges">
+      <div class="composite-ring" id="ring"></div>
+      <div class="ring-metrics" id="ring-metrics"></div>
+    </div>
+    <div class="hero-info">
+      <div class="hero-kicker">Claude Code Security Scan</div>
+      <div class="hero-persona-title tone-${p.tone}">${p.title}</div>
+      <div class="hero-tagline">${p.tagline}</div>
+      <div class="hero-scores">
+        ${[
+          { label: 'Secrets', score: data.scores.secrets },
+          { label: 'Permissions', score: data.scores.permissions },
+          { label: 'Remote', score: data.scores.remote_access },
+          { label: 'Commands', score: data.scores.commands },
+          { label: 'Agents', score: data.scores.agent_oversight },
+        ].map(s => `<div class="hero-score-item"><div class="hero-score-val" style="color:${scoreColor(s.score)}">${s.score}%</div><div class="hero-score-label">${s.label}</div></div>`).join('')}
+      </div>
+      <div class="hero-download"><button class="download-card-btn" onclick="downloadCard()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download card</button><button class="review-link" onclick="document.querySelector('.report-section').scrollIntoView({behavior:'smooth'})"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>review full report</button><div class="card-preview" data-tone="${p.tone}"><div class="cp-bar" data-tone="${p.tone}"></div><div class="cp-kicker">Claude Code Security Scan</div><div class="cp-title" data-tone="${p.tone}">${p.title}</div><div class="cp-score" style="color:${scoreColor(data.scores.overall)}">${data.scores.overall}<span style="font-size:6px;color:var(--text-muted)"> /100</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- Hidden card for download only -->
+  <div class="persona-card" data-tone="${p.tone}">
+    <div class="persona-accent-bar"></div>
+    <div class="persona-kicker">Claude Code Security Scan</div>
+    <div class="persona-title">${p.title}</div>
+    <div class="persona-tagline">${p.tagline}</div>
+    <div class="persona-card-body">
+      <div class="persona-mini-ring" id="mini-ring"></div>
+      <div class="persona-scores">
+        ${[
+          { label: 'Secrets', score: data.scores.secrets },
+          { label: 'Permissions', score: data.scores.permissions },
+          { label: 'Remote', score: data.scores.remote_access },
+          { label: 'Commands', score: data.scores.commands },
+          { label: 'Agents', score: data.scores.agent_oversight },
+        ].map(s => `<div class="persona-score-row"><span class="persona-score-label">${s.label}</span><span class="persona-score-val" style="color:${scoreColor(s.score)}">${s.score}%</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="persona-footer">
+      <span><img class="persona-logo" src="data:image/png;base64,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" alt=""></span>
+      <span>vibenalytics.dev/security</span>
+    </div>
+  </div>
+
+  <main class="report">
+    <section class="report-section" style="--section-color:var(--red)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">01</span> Metric Area</div>
+        <div class="section-heading">Secret exposure</div>
+        <div class="section-copy">Sensitive values found in transcripts, prompts, or files and where they were concentrated.</div>
+      </div>
+      <div class="section-body">
+        <div class="mini-stats" id="secret-stats"></div>
+        <div class="subgrid-2">
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Secret types detected</div><div class="card-note">Counts by secret type found during the scan.</div></div>
+            <div class="chart" id="secret-types"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Most frequently exposed values</div><div class="card-note">Specific values that appeared repeatedly across the dataset.</div></div>
+            <div class="detail-list" id="most-exposed"></div>
+          </section>
+        </div>
+        <section class="card">
+          <div class="card-header"><div class="card-title">Exposure by project</div><div class="card-note">Which projects accounted for the most secret-related activity.</div></div>
+          <div class="chart" id="project-exposure"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--blue)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">02</span> Metric Area</div>
+        <div class="section-heading">Remote server access</div>
+        <div class="section-copy">Hosts reached over SSH, how often they were accessed, and when that activity happened.</div>
+      </div>
+      <div class="section-body">
+        <div class="mini-stats" id="remote-stats"></div>
+        <div class="subgrid-2">
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Remote activity by host</div><div class="card-note">SSH command volume for each host.</div></div>
+            <div class="chart" id="remote-hosts"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Remote activity by day</div><div class="card-note">Daily SSH activity with the top host and a short activity summary.</div></div>
+            <table><thead><tr><th>Date</th><th>Commands</th><th>Host</th><th>Activity</th></tr></thead><tbody id="remote-timeline"></tbody></table>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--orange)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">03</span> Metric Area</div>
+        <div class="section-heading">Risky shell commands</div>
+        <div class="section-copy">Potentially destructive command usage, repeated command patterns, and sensitive Git actions.</div>
+      </div>
+      <div class="section-body">
+        <div class="mini-stats" id="command-stats"></div>
+        <div class="subgrid-3">
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Command severity</div><div class="card-note">Counts of commands by severity level.</div></div>
+            <div class="chart" id="severity-distribution"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Command categories</div><div class="card-note">Command types that appeared most often.</div></div>
+            <div class="chart" id="command-categories"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Sensitive Git actions</div><div class="card-note">Counts for push to main, force push, reset --hard, and --no-verify.</div></div>
+            <div class="detail-list" id="git-safety"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--accent)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">04</span> Metric Area</div>
+        <div class="section-heading">Permission modes</div>
+        <div class="section-copy">How often the scan ran in bypass mode versus other permission modes, shown overall and by day.</div>
+      </div>
+      <div class="section-body">
+        <div class="subgrid-2">
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Permission mode breakdown</div><div class="card-note">Overall distribution across bypass, accept edits, and default modes.</div></div>
+            <div style="display:flex;align-items:center;gap:20px;margin-top:8px"><div id="perm-legend" class="perm-legend" style="flex:0 0 auto"></div><div id="chart-perm-donut" style="max-width:240px;flex:1"></div></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Permission modes over time</div><div class="card-note">One 100% stacked bar for each day in the scan window.</div></div>
+            <div id="mode-trends"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--purple)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">05</span> Metric Area</div>
+        <div class="section-heading">Agent oversight</div>
+        <div class="section-copy">Agent usage, human intervention, and which tools were rejected most often.</div>
+      </div>
+      <div class="section-body">
+        <div class="subgrid-2">
+          <section class="card">
+            <div class="card-header"><div class="card-title">Agent oversight summary</div><div class="card-note">Spawned agents, bypass usage, denials, and override rate.</div></div>
+            <div class="mini-stats" id="oversight-stats"></div>
+          </section>
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Most rejected tools</div><div class="card-note">Tool categories that triggered rejection most often.</div></div>
+            <div class="chart" id="rejected-tools"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--green)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">06</span> Metric Area</div>
+        <div class="section-heading">Prompt sentiment</div>
+        <div class="section-copy">Positive and negative language patterns across prompts and projects.</div>
+      </div>
+      <div class="section-body">
+        <div class="subgrid-2">
+          <section class="card">
+            <div class="card-header"><div class="card-title">Sentiment overview</div><div class="card-note">High-level counts and ratio of positive versus negative language.</div></div>
+            <div class="detail-list" id="sentiment-summary"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Sentiment by project</div><div class="card-note">Positive and negative prompt counts for each project.</div></div>
+            <table><thead><tr><th>Project</th><th>Positive</th><th>Negative</th><th>Total prompts</th></tr></thead><tbody id="sentiment-projects"></tbody></table>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-section" style="--section-color:var(--red)">
+      <div class="section-top">
+        <div class="section-label"><span class="section-index">07</span> Metric Area</div>
+        <div class="section-heading">Priority findings</div>
+        <div class="section-copy">Highest-priority risks to address first, followed by positive signals that still appear in the scan.</div>
+      </div>
+      <div class="section-body">
+        <div class="subgrid-2">
+          <section class="card accent-card">
+            <div class="card-header"><div class="card-title">Highest-priority issues</div><div class="card-note">The most important findings from the scan.</div></div>
+            <div class="risk-list" id="priority-risks-list"></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><div class="card-title">Positive signals</div><div class="card-note">Behaviors or controls that still appear to be helping.</div></div>
+            <div class="good-list" id="working-well"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">
+    <div>vibenalytics security report</div>
+    <div><a href="https://vibenalytics.dev">vibenalytics.dev</a></div>
+  </div>
+`;
+
+      // Hero glow
+      const heroColor = scoreColor(data.scores.overall);
+      document.querySelector('.hero-row').style.setProperty('--hero-glow', heroColor);
+
+      // Ring gauges
+      compositeRing('#ring', '#ring-metrics', data.scores.overall, [
+        { label: 'Secrets', score: data.scores.secrets, weight: 30, sublabel: `${data.secret_exposure.total_secrets} exposed`, detail: 'API keys, tokens, and credentials found in transcript context' },
+        { label: 'Permissions', score: data.scores.permissions, weight: 25, sublabel: `${Math.round(data.permission_discipline.bypass_pct)}% bypass`, detail: 'How often guardrails were bypassed vs respected' },
+        { label: 'Remote', score: data.scores.remote_access, weight: 20, sublabel: `${data.ssh_remote_access.ssh_commands} ssh cmds`, detail: 'SSH commands and remote server access via AI' },
+        { label: 'Commands', score: data.scores.commands, weight: 15, sublabel: `${data.destructive_commands.critical} critical`, detail: 'Dangerous shell commands: rm -rf, sudo, force push, etc.' },
+        { label: 'Agents', score: data.scores.agent_oversight, weight: 10, sublabel: `${data.autonomous_agents.agents_spawned} spawned`, detail: 'Autonomous agents running with or without supervision' },
+      ]);
+      miniRing('#mini-ring', data.scores.overall, [
+        { score: data.scores.secrets },
+        { score: data.scores.permissions },
+        { score: data.scores.remote_access },
+        { score: data.scores.commands },
+        { score: data.scores.agent_oversight },
+      ]);
+
+      // Section stats
+      document.getElementById('secret-stats').innerHTML = [
+        mini('Secrets found', data.secret_exposure.total_secrets, C.red),
+        mini('Sensitive reads', data.secret_exposure.sensitive_reads, C.blue),
+        mini('.env file writes', data.secret_exposure.env_writes, C.orange),
+        mini('Environment paths', data.secret_exposure.env_paths, C.green)
+      ].join('');
+
+      document.getElementById('remote-stats').innerHTML = [
+        mini('SSH commands', data.ssh_remote_access.ssh_commands, C.red),
+        mini('Unique hosts', data.ssh_remote_access.unique_hosts, C.blue),
+        mini('Interactive SSH', data.ssh_remote_access.interactive_ssh, C.orange),
+        mini('Active days', data.ssh_remote_access.active_days, C.green)
+      ].join('');
+
+      document.getElementById('command-stats').innerHTML = [
+        mini('Critical', data.destructive_commands.critical, C.red),
+        mini('High', data.destructive_commands.high, C.orange),
+        mini('Medium', data.destructive_commands.medium, C.blue),
+        mini('Low', data.destructive_commands.low, C.green)
+      ].join('');
+
+      document.getElementById('oversight-stats').innerHTML = [
+        mini('Agents spawned', data.autonomous_agents.agents_spawned, C.accent),
+        mini('Bypass mode', data.autonomous_agents.in_bypass_mode, C.red),
+        mini('Denials', data.human_overrides.denials, C.green),
+        mini('Override rate', `${Math.round(data.human_overrides.override_rate)}%`, C.blue)
+      ].join('');
+
+      const sent = data.user_sentiment;
+      const ratio = sent.total_negative ? (sent.total_positive / sent.total_negative).toFixed(sent.total_positive / sent.total_negative >= 3 ? 0 : 1) : sent.total_positive;
+      document.getElementById('sentiment-summary').innerHTML = [
+        ['Positive terms', sent.total_positive, 'badge-green', formatTopTerms(sent.top_positive, 'positive')],
+        ['Negative terms', sent.total_negative, 'badge-red', formatTopTerms(sent.top_negative, 'negative')],
+        ['Positive : negative', `${ratio}:1`, 'badge-blue', ''],
+        ['Total prompts', sent.prompt_total, 'badge-orange', '']
+      ].map(([name, value, badge, sub]) => `<div class="detail"><div class="name${sub ? ' with-sub' : ''}">${name}${sub ? `<div class="detail-sub">${sub}</div>` : ''}</div><div class="num">${value}</div><div class="meta"><span class="badge ${badge}">${name}</span></div></div>`).join('');
+
+      // Charts
+      hBarChart('#secret-types', arr(data.secret_exposure.secret_types).map((d, i) => ({ label: d.label, value: d.count, color: i < 2 ? C.red : i < 5 ? C.orange : C.blue })), { left: 180, limit: 10, width: 760 });
+      stackedProjectChart('#project-exposure', arr(data.secret_exposure.exposure_by_project));
+      hBarChart('#remote-hosts', arr(data.ssh_remote_access.hosts_accessed).map((d, i) => ({ label: d.label, value: d.count, color: i < 2 ? C.accent : i < 5 ? C.orange : C.blue })), { left: 170, limit: 8, width: 700 });
+      severityColumns('#severity-distribution', arr(data.destructive_commands.severity_distribution));
+      hBarChart('#command-categories', arr(data.destructive_commands.by_category).map((d, i) => ({ label: d.label, value: d.count, color: i === 0 ? C.red : i < 4 ? C.orange : C.blue })), { left: 138, limit: 8, width: 420, rowHeight: 26 });
+      hBarChart('#rejected-tools', arr(data.human_overrides.most_rejected_tools).map((d, i) => ({ label: d.label, value: d.count, color: i < 2 ? C.green : C.blue })), { left: 120, limit: 8, width: 640 });
+
+      // Git safety
+      const git = data.destructive_commands.git_safety;
+      document.getElementById('git-safety').innerHTML = [
+        ['Push to main', git.push_to_main, 'badge-orange', 'seen'],
+        ['Force push', git.force_push, 'badge-blue', git.force_push > 0 ? 'seen' : 'not seen'],
+        ['reset --hard', git.reset_hard, 'badge-blue', git.reset_hard > 0 ? 'seen' : 'not seen'],
+        ['--no-verify', git.no_verify, 'badge-green', git.no_verify > 0 ? 'seen' : 'not seen']
+      ].map(([name, value, badge, label]) => `<div class="detail"><div class="name">${name}</div><div class="num">${value}</div><div class="meta"><span class="badge ${badge}">${label}</span></div></div>`).join('');
+
+      // Mode share
+      const modes = arr(data.permission_discipline.mode_distribution).map((d, i) => ({ l: d.label, v: d.count, c: [C.red, C.orange, C.green][i % 3] }));
+      donut('#chart-perm-donut', modes, data.permission_discipline.prompt_total, `${Math.round(data.permission_discipline.bypass_pct)}%`);
+      document.getElementById('perm-legend').innerHTML = arr(data.permission_discipline.mode_distribution).map((d, i) => {
+        const color = [C.red, C.orange, C.green][i % 3];
+        const pct = data.permission_discipline.prompt_total ? Math.round((d.count / data.permission_discipline.prompt_total) * 100) : 0;
+        return `<div class="perm-legend-item"><span class="perm-legend-dot" style="background:${color}"></span><div><div class="perm-legend-label">${d.label}</div><div class="perm-legend-meta">${d.count} · ${pct}%</div></div></div>`;
+      }).join('');
+      modeTrendChart('#mode-trends', arr(data.permission_discipline.modes_by_day));
+
+      // Tables
+      document.getElementById('most-exposed').innerHTML = arr(data.secret_exposure.most_exposed).slice(0, 8).map(item => `<div class="detail"><div class="name mono">${esc(item.secret)}</div><div class="num">${item.hits}</div><div class="meta">${item.projects} projects</div></div>`).join('');
+      document.getElementById('remote-timeline').innerHTML = arr(data.ssh_remote_access.timeline).map(item => `<tr><td class="mono">${item.date}</td><td class="mono">${item.commands}</td><td class="mono">${esc(item.top_host)}</td><td>${esc(item.activity_summary)}</td></tr>`).join('');
+      document.getElementById('sentiment-projects').innerHTML = arr(sent.by_project).map(item => `<tr><td class="mono">${esc(item.project)}</td><td class="mono" style="color:${C.green}">${item.positive}</td><td class="mono" style="color:${C.red}">${item.negative}</td><td class="mono">${item.total_prompts}</td></tr>`).join('');
+      document.getElementById('priority-risks-list').innerHTML = buildPriorityRisks(data).map(item => `<div class="risk-item"><div class="risk-head"><span class="badge ${riskBadge(item.priority)}">${item.priority}</span><div class="risk-title">${esc(item.title)}</div></div><div class="risk-desc">${esc(item.description)}</div></div>`).join('');
+      document.getElementById('working-well').innerHTML = buildPositiveSignals(data).map(item => `<div class="good-item">${esc(item)}</div>`).join('');
+    }
+
+    fetch(dataUrl)
+      .then(r => { if (!r.ok) throw new Error(`Failed to load ${dataUrl}: ${r.status}`); return r.json(); })
+      .then(render)
+      .catch(err => {
+        document.getElementById('app').innerHTML = `<div class="error">Failed to load report JSON.<br><br>${esc(err.message)}</div>`;
+      });
+  </script>
+</body>
+
+</html>
