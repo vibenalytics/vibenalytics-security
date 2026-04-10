@@ -2,6 +2,8 @@
 
 Security audit & risk dashboard for Claude Code sessions.
 
+![cc-vibeguard demo](assets/demo.gif)
+
 Scans your local Claude Code transcripts and generates a visual security report - secrets leaked in tool outputs, destructive commands executed, permission bypass patterns, SSH remote access, agent oversight gaps, and more.
 
 ```
